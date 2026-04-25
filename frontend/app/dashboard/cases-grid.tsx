@@ -7,7 +7,8 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Button } from "@/components/ui/button";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
 interface Case
@@ -75,11 +76,59 @@ export default function CasesGrid({ cases: initialCases, page, totalCount, total
 	const [externalLoading, setExternalLoading] = useState<boolean>(false);
 
 	const [popularCases, setPopularCases] = useState<Case[]>([]);
+	// index for manual popular-cases navigation
+	const [popularIndex, setPopularIndex] = useState<number>(0);
+
+	const trackRef = useRef<HTMLDivElement | null>(null);
+
+	// Carousel for displayed cases
+	const [displayedIndex, setDisplayedIndex] = useState<number>(0);
+	const displayedTrackRef = useRef<HTMLDivElement | null>(null);
+
+	// ensure popularIndex stays in bounds if popularCases changes (3 per page)
+	useEffect(() => {
+		if(popularCases.length === 0) {
+			setPopularIndex(0);
+			return;
+		}
+		const maxIndex = Math.max(0, Math.ceil(popularCases.length / 3) - 1);
+		setPopularIndex((idx) => Math.min(Math.max(0, idx), maxIndex));
+	}, [popularCases]);
+
+	const popularPages = Math.max(1, Math.ceil(popularCases.length / 3));
+
+	// scroll track to page when popularIndex changes
+	useEffect(() => {
+		if(!trackRef.current) return;
+		const track = trackRef.current;
+		const pageWidth = track.clientWidth; // visible width
+		track.scrollTo({ left: popularIndex * (pageWidth + 16), behavior: 'smooth' });
+	}, [popularIndex]);
+
+	// ensure displayedIndex stays in bounds
+	useEffect(() => {
+		if(displayedCases.length === 0) {
+			setDisplayedIndex(0);
+			return;
+		}
+		const maxIndex = Math.max(0, Math.ceil(displayedCases.length / 3) - 1);
+		setDisplayedIndex((idx) => Math.min(Math.max(0, idx), maxIndex));
+	}, [displayedCases]);
+
+	const displayedPages = Math.max(1, Math.ceil(displayedCases.length / 3));
+
+	// scroll track to page when displayedIndex changes
+	useEffect(() => {
+		if(!displayedTrackRef.current) return;
+		const track = displayedTrackRef.current;
+		const pageWidth = track.clientWidth;
+		track.scrollTo({ left: displayedIndex * (pageWidth + 16), behavior: 'smooth' });
+	}, [displayedIndex]);
 	
 	// Load more state
 	const [displayedCases, setDisplayedCases] = useState<Case[]>(initialCases);
 	const [loadMoreLoading, setLoadMoreLoading] = useState(false);
-	const [hasMoreResults, setHasMoreResults] = useState(initialCases.length === 5);
+	const [hasMoreResults, setHasMoreResults] = useState(initialCases.length === 6);
 
 	// Animation visibility: only show if no search inputs AND no results (initial or external)
 	const isSearching = Boolean(searchQuery || issue || yearFrom || yearTo || keyword);
@@ -89,7 +138,7 @@ export default function CasesGrid({ cases: initialCases, page, totalCount, total
 	useEffect(() => {
 		Promise.resolve().then(() => {
 			setDisplayedCases(initialCases);
-			setHasMoreResults(initialCases.length === 5);
+			setHasMoreResults(initialCases.length === 6);
 		});
 	}, [initialCases]);
 
@@ -164,14 +213,14 @@ export default function CasesGrid({ cases: initialCases, page, totalCount, total
 			if (yearTo) url.searchParams.set("year_to", yearTo);
 			if (keyword) url.searchParams.set("keyword", keyword);
 			url.searchParams.set("exclude", currentIds);
-			url.searchParams.set("limit", "5");
+			url.searchParams.set("limit", "6");
 
 			const res = await fetch(url.toString());
 			if (!res.ok) throw new Error();
 			const data = await res.json();
 			if (data.cases && data.cases.length > 0) {
 				setDisplayedCases(prev => [...prev, ...data.cases]);
-				setHasMoreResults(data.cases.length === 5);
+				setHasMoreResults(data.cases.length === 6);
 			} else {
 				setHasMoreResults(false);
 			}
@@ -212,7 +261,7 @@ export default function CasesGrid({ cases: initialCases, page, totalCount, total
 		const loadPopular = async () => {
 			if(!showPopular) return;
 			try {
-				const url = `${API_URL}/cases/popular?limit=5`;
+				const url = `${API_URL}/cases/popular?limit=6`;
 				const res = await fetch(url);
 				if(!res.ok) throw new Error();
 				const data = await res.json();
@@ -322,41 +371,106 @@ export default function CasesGrid({ cases: initialCases, page, totalCount, total
 
 			{/* Local (Gemini) search results */}
 			{displayedCases.length > 0 && (
-				<div className="flex flex-col gap-6">
-					<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-						{displayedCases.map((c) => (
-							<Link
-								key={c.id}
-								href={`/dashboard/cases/${c.id}`}
-								className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-xl"
-							>
-								<Card className="h-full flex flex-col hover:bg-muted transition-colors cursor-pointer">
-									<CardHeader className="pb-2">
-										<div className="flex items-center justify-between mb-1">
-											<Badge variant="secondary">{c.category}</Badge>
-											<span className="text-xs text-muted-foreground">{c.year}</span>
-										</div>
-										<CardTitle className="text-base leading-snug">{c.name}</CardTitle>
-									</CardHeader>
-									<CardContent className="flex-1">
-										<p className="text-sm text-muted-foreground line-clamp-4">{c.summary}</p>
-									</CardContent>
-									<CardFooter>
-										<span className="text-xs text-muted-foreground">{c.citation}</span>
-									</CardFooter>
-								</Card>
-							</Link>
-						))}
+				<div className="flex flex-col gap-6 relative">
+					<div className="flex items-center justify-between mb-2">
+						<div />
+						<div className="text-sm text-muted-foreground">Cases</div>
+						<div />
 					</div>
+
+					<div className="relative w-full overflow-hidden group">
+						<div
+							tabIndex={0}
+							onKeyDown={(e) => {
+								if(e.key === 'ArrowLeft') setDisplayedIndex((p) => Math.max(0, p - 1));
+								if(e.key === 'ArrowRight') {
+									const maxIdx = Math.max(0, Math.ceil(displayedCases.length / 3) - 1);
+									setDisplayedIndex((p) => Math.min(maxIdx, p + 1));
+								}
+							}}
+							className="outline-none"
+						>
+							<div ref={displayedTrackRef} className="flex overflow-x-auto scroll-smooth no-scrollbar gap-4 px-6 py-2">
+								{displayedCases.map((c) => (
+									<div key={c.id} className="flex-none w-full sm:w-[calc(50%-8px)] lg:w-[calc(33.333%-10.666px)]">
+										<Link
+											href={`/dashboard/cases/${c.id}`}
+											className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-xl block h-full"
+										>
+											<Card className="h-full flex flex-col hover:bg-muted transition-colors cursor-pointer min-h-[220px]">
+												<CardHeader className="pb-2">
+													<div className="flex items-center justify-between mb-1">
+														<Badge variant="secondary">{c.category}</Badge>
+														<span className="text-xs text-muted-foreground">{c.year}</span>
+													</div>
+													<CardTitle className="text-base leading-snug">{c.name}</CardTitle>
+												</CardHeader>
+												<CardContent className="flex-1">
+													<p className="text-sm text-muted-foreground line-clamp-4">{c.summary}</p>
+												</CardContent>
+												<CardFooter>
+													<span className="text-xs text-muted-foreground">{c.citation}</span>
+												</CardFooter>
+											</Card>
+										</Link>
+									</div>
+								))}
+							</div>
+						</div>
+
+						{displayedPages > 1 && (
+							<>
+								<div className="absolute left-0 top-1/2 -translate-y-1/2 z-50">
+									<button
+										onClick={() => setDisplayedIndex((p) => Math.max(0, p - 1))}
+										aria-label="Previous cases"
+										disabled={displayedIndex <= 0}
+										className="flex items-center justify-center w-10 h-10 rounded-full bg-black shadow-lg border border-border text-white disabled:opacity-0 disabled:cursor-not-allowed transition-opacity hover:bg-black"
+									>
+										<ChevronLeft className="w-6 h-6" />
+									</button>
+								</div>
+
+								<div className="absolute right-0 top-1/2 -translate-y-1/2 z-50">
+									<button
+										onClick={() => {
+											const maxIdx = Math.max(0, Math.ceil(displayedCases.length / 3) - 1);
+											setDisplayedIndex((p) => Math.min(maxIdx, p + 1));
+										}}
+										aria-label="Next cases"
+										disabled={displayedIndex >= displayedPages - 1}
+										className="flex items-center justify-center w-10 h-10 rounded-full bg-black shadow-lg border border-border text-white disabled:opacity-0 disabled:cursor-not-allowed transition-opacity hover:bg-black"
+									>
+										<ChevronRight className="w-6 h-6" />
+									</button>
+								</div>
+							</>
+						)}
+
+						{/* page dots */}
+						{displayedPages > 1 && (
+							<div className="flex items-center justify-center gap-2 mt-2">
+								{Array.from({ length: displayedPages }).map((_, i) => (
+									<button
+										key={i}
+										onClick={() => setDisplayedIndex(i)}
+										aria-label={`Go to page ${i + 1}`}
+										className={`w-2 h-2 rounded-full transition-colors ${i === displayedIndex ? 'bg-foreground' : 'bg-border hover:bg-muted-foreground'}`}
+									/>
+								))}
+							</div>
+						)}
+					</div>
+
 					{hasMoreResults && (
-						<div className="flex justify-center mt-4">
+						<div className="flex justify-center">
 							<Button 
 								variant="outline" 
 								onClick={loadMoreCases} 
 								disabled={loadMoreLoading}
 								className="w-full max-w-xs"
 							>
-								{loadMoreLoading ? "Generating..." : "Generate another row of 5"}
+								{loadMoreLoading ? "Generating..." : "Generate more cases"}
 							</Button>
 						</div>
 					)}
@@ -370,42 +484,96 @@ export default function CasesGrid({ cases: initialCases, page, totalCount, total
 			)}
 
 			{showPopular && (
-				<div className="relative w-full h-[450px] mt-4 mb-10 overflow-hidden">
-					{popularCases.map((c, i) => (
-						<Link
-							key={c.id}
-							href={`/dashboard/cases/${c.id}`}
-							className="absolute left-1/2 top-0 -translate-x-1/2 w-72 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-xl animate-arc-x"
-							style={{ 
-								animationDelay: `-${i * (27000 / popularCases.length)}ms`,
-								zIndex: 0
+				<div className="w-full h-auto mt-4 mb-10">
+					<div className="flex items-center justify-between mb-2">
+						<div />
+						<div className="text-sm text-muted-foreground">Popular cases</div>
+						<div />
+					</div>
+
+					<div className="relative w-full overflow-hidden group">
+						<div
+							tabIndex={0}
+							onKeyDown={(e) => {
+								if(e.key === 'ArrowLeft') setPopularIndex((p) => Math.max(0, p - 1));
+								if(e.key === 'ArrowRight') {
+									const maxIdx = Math.max(0, Math.ceil(popularCases.length / 3) - 1);
+									setPopularIndex((p) => Math.min(maxIdx, p + 1));
+								}
 							}}
+							className="outline-none"
 						>
-							<div 
-								className="animate-arc-y"
-								style={{ 
-									animationDelay: `-${i * (27000 / popularCases.length)}ms`,
-									willChange: 'transform, opacity'
-								}}
-							>
-								<Card className="h-full flex flex-col hover:bg-muted transition-colors cursor-pointer shadow-xl border-primary/10">
-									<CardHeader className="pb-2 p-4">
-										<div className="flex items-center justify-between mb-1">
-											<Badge variant="secondary" className="text-[10px] h-4 px-1">{c.category}</Badge>
-											<span className="text-[10px] text-muted-foreground">{c.year}</span>
-										</div>
-										<CardTitle className="text-sm font-bold leading-tight line-clamp-1">{c.name}</CardTitle>
-									</CardHeader>
-									<CardContent className="flex-1 p-4 pt-0">
-										<p className="text-xs text-muted-foreground line-clamp-3">{c.summary}</p>
-									</CardContent>
-									<CardFooter className="p-4 pt-0">
-										<span className="text-[10px] text-muted-foreground truncate">{c.citation}</span>
-									</CardFooter>
-								</Card>
+							<div ref={trackRef} className="flex overflow-x-auto scroll-smooth no-scrollbar gap-4 px-6 py-2">
+								{popularCases.map((pc, i) => (
+									<div key={pc.id} className="flex-none w-full sm:w-[calc(50%-8px)] lg:w-[calc(33.333%-10.666px)]">
+										<Link
+											href={`/dashboard/cases/${pc.id}`}
+											className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-xl block h-full"
+										>
+											<Card className="h-[380px] flex flex-col hover:bg-muted transition-colors cursor-pointer shadow-xl border-primary/10">
+												<CardHeader className="pb-2 p-6">
+													<div className="flex items-center justify-between mb-1">
+														<Badge variant="secondary" className="text-[10px] h-4 px-1">{pc.category}</Badge>
+														<span className="text-[10px] text-muted-foreground">{pc.year}</span>
+													</div>
+													<CardTitle className="text-lg font-bold leading-tight line-clamp-2">{pc.name}</CardTitle>
+												</CardHeader>
+												<CardContent className="flex-1 p-6 pt-0">
+													<p className="text-sm text-muted-foreground line-clamp-4">{pc.summary}</p>
+												</CardContent>
+												<CardFooter className="p-4 pt-0">
+													<span className="text-[12px] text-muted-foreground truncate">{pc.citation}</span>
+												</CardFooter>
+											</Card>
+										</Link>
+									</div>
+								))}
 							</div>
-						</Link>
-					))}
+						</div>
+
+						{popularPages > 1 && (
+							<>
+								<div className="absolute left-0 top-1/2 -translate-y-1/2 z-50">
+									<button
+										onClick={() => setPopularIndex((p) => Math.max(0, p - 1))}
+										aria-label="Previous popular cases"
+										disabled={popularIndex <= 0}
+										className="flex items-center justify-center w-10 h-10 rounded-full bg-black/80 shadow-lg border border-border text-white disabled:opacity-0 disabled:cursor-not-allowed transition-opacity hover:bg-black"
+									>
+										<ChevronLeft className="w-6 h-6" />
+									</button>
+								</div>
+
+								<div className="absolute right-0 top-1/2 -translate-y-1/2 z-50">
+									<button
+										onClick={() => {
+											const maxIdx = Math.max(0, Math.ceil(popularCases.length / 3) - 1);
+											setPopularIndex((p) => Math.min(maxIdx, p + 1));
+										}}
+										aria-label="Next popular cases"
+										disabled={popularIndex >= popularPages - 1}
+										className="flex items-center justify-center w-10 h-10 rounded-full bg-black/80 shadow-lg border border-border text-white disabled:opacity-0 disabled:cursor-not-allowed transition-opacity hover:bg-black"
+									>
+										<ChevronRight className="w-6 h-6" />
+									</button>
+								</div>
+							</>
+						)}
+
+						{/* page dots */}
+						{popularPages > 1 && (
+							<div className="flex items-center justify-center gap-2 mt-2">
+								{Array.from({ length: popularPages }).map((_, i) => (
+									<button
+										key={i}
+										onClick={() => setPopularIndex(i)}
+										aria-label={`Go to page ${i + 1}`}
+										className={`w-2 h-2 rounded-full transition-colors ${i === popularIndex ? 'bg-foreground' : 'bg-border hover:bg-muted-foreground'}`}
+									/>
+								))}
+							</div>
+						)}
+					</div>
 				</div>
 			)}
 

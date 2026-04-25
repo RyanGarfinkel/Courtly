@@ -64,7 +64,7 @@ type SearchParams = {
 	defendant?: string;
 };
 
-const PAGE_SIZE = 5;
+const PAGE_SIZE = 6;
 
 export default async function Dashboard({ searchParams }: { searchParams?: Promise<SearchParams> })
 {
