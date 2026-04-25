@@ -74,12 +74,38 @@ All agents are **stateless functions** operating over structured data.
 
 ---
 
-### 5. Judge Agent
-- Final authority
-- Responsibilities:
-  - reject unsupported claims
-  - penalize contradictions
-  - produce ruling + confidence
+### 5. Judicial Panel (9 Judge Agents)
+
+The panel replaces a single judge. All 9 agents are instances of the same `JudgeAgent` initialized with a distinct judicial philosophy. They vote independently — majority rules.
+
+Each judge produces:
+- `vote`: `for` | `against` | `abstain`
+- `opinion`: reasoning grounded in their philosophy
+- `opinion_type`: `majority` | `concurrence` | `dissent`
+
+The panel orchestrator tallies votes and designates the majority opinion author, any concurrences, and dissents.
+
+#### The Nine
+
+| # | Name | Philosophy |
+|---|------|------------|
+| 1 | **Justice Hale** | Textualist — interprets law by the plain meaning of the text at time of enactment |
+| 2 | **Justice Okafor** | Original Intent — seeks the framers' purpose behind the law |
+| 3 | **Justice Voss** | Living Constitutionalist — the constitution evolves with society |
+| 4 | **Justice Crane** | Pragmatist — weighs real-world consequences over doctrinal purity |
+| 5 | **Justice Mirande** | Civil Libertarian — strong presumption toward individual rights |
+| 6 | **Justice Ashworth** | Structuralist — focuses on separation of powers and federalism |
+| 7 | **Justice Lim** | Precedent-First — heavily weights stare decisis, resistant to overturning settled law |
+| 8 | **Justice Ndidi** | Natural Law — grounds decisions in fundamental moral principles |
+| 9 | **Justice Solis** | Balancing Test — applies proportionality, weighs competing state and individual interests |
+
+#### Panel Outputs
+- **Ruling**: majority vote (5+ judges)
+- **Confidence**: margin of the vote (9-0 = highest, 5-4 = lowest)
+- **Majority opinion**: written by the judge whose reasoning best represents the majority
+- **Concurrences**: same vote, different reasoning
+- **Dissents**: opposing votes with full reasoning
+- **Swing analysis**: which judge(s) were closest to flipping
 
 ---
 

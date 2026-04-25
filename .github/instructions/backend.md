@@ -21,6 +21,7 @@ backend/
     models/        # Pydantic models
     orchestrators/ # agent pipeline orchestration
     services/      # business logic
+  config/          # static configuration files (e.g. judges.json)
   main.py          # app entry point — mounts routers, nothing else
   .env             # secrets (gitignored)
   .env.example     # checked-in template with empty values

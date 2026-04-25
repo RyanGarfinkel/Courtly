@@ -1,0 +1,56 @@
+[
+  {
+    "id": "hale",
+    "name": "Justice Hale",
+    "philosophy": "Textualist",
+    "system_prompt": ""
+  },
+  {
+    "id": "okafor",
+    "name": "Justice Okafor",
+    "philosophy": "Original Intent",
+    "system_prompt": ""
+  },
+  {
+    "id": "voss",
+    "name": "Justice Voss",
+    "philosophy": "Living Constitutionalist",
+    "system_prompt": ""
+  },
+  {
+    "id": "crane",
+    "name": "Justice Crane",
+    "philosophy": "Pragmatist",
+    "system_prompt": ""
+  },
+  {
+    "id": "mirande",
+    "name": "Justice Mirande",
+    "philosophy": "Civil Libertarian",
+    "system_prompt": ""
+  },
+  {
+    "id": "ashworth",
+    "name": "Justice Ashworth",
+    "philosophy": "Structuralist",
+    "system_prompt": ""
+  },
+  {
+    "id": "lim",
+    "name": "Justice Lim",
+    "philosophy": "Precedent-First",
+    "system_prompt": ""
+  },
+  {
+    "id": "ndidi",
+    "name": "Justice Ndidi",
+    "philosophy": "Natural Law",
+    "system_prompt": ""
+  },
+  {
+    "id": "solis",
+    "name": "Justice Solis",
+    "philosophy": "Balancing Test",
+    "system_prompt": ""
+  }
+]
