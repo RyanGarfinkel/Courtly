@@ -44,11 +44,17 @@ async function getExistingDraft(caseId: string): Promise<string | null>
 	}
 }
 
-type Props = { params: Promise<{ id: string }> };
+type Side = "plaintiff" | "defendant";
 
-export default async function BriefPage({ params }: Props)
+type Props = {
+	params: Promise<{ id: string }>;
+	searchParams?: Promise<{ side?: string }>;
+};
+
+export default async function BriefPage({ params, searchParams }: Props)
 {
-	const { id } = await params;
+	const [{ id }, sp] = await Promise.all([params, searchParams ?? Promise.resolve({})]);
+	const side: Side = sp.side === "defendant" ? "defendant" : "plaintiff";
 	const [c, initialDraft] = await Promise.all([getCase(id), getExistingDraft(id)]);
 	if(!c) notFound();
 
@@ -77,10 +83,15 @@ export default async function BriefPage({ params }: Props)
 						<span className="text-xs text-muted-foreground">{c.year}</span>
 						<span className="text-xs text-muted-foreground">{c.citation}</span>
 					</div>
-					<h1 className="text-2xl font-bold">{c.name}</h1>
+					<div className="flex items-center gap-3">
+						<h1 className="text-2xl font-bold">{c.name}</h1>
+						<Badge variant={side === "plaintiff" ? "default" : "secondary"}>
+							{side === "plaintiff" ? "Plaintiff" : "Defense"}
+						</Badge>
+					</div>
 				</div>
 
-				<Workspace case_={c} initialDraft={initialDraft} />
+				<Workspace case_={c} initialDraft={initialDraft} side={side} />
 			</div>
 		</main>
 	);

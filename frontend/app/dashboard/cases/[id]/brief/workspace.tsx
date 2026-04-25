@@ -9,6 +9,7 @@ import Placeholder from "@tiptap/extension-placeholder";
 import StarterKit from "@tiptap/starter-kit";
 import ResearchPanel from "./research-panel";
 import AiPanel from "./ai-panel";
+import { marked } from "marked";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 
@@ -28,6 +29,7 @@ interface Props
 {
 	case_: Case;
 	initialDraft: string | null;
+	side: "plaintiff" | "defendant";
 }
 
 interface ToolbarButtonProps
@@ -59,7 +61,7 @@ function ToolbarButton({ onClick, active, children }: ToolbarButtonProps)
 	);
 }
 
-export default function Workspace({ case_, initialDraft }: Props)
+export default function Workspace({ case_, initialDraft, side }: Props)
 {
 	const [panelOpen, setPanelOpen] = useState(true);
 	const [saving, setSaving] = useState(false);
@@ -79,7 +81,7 @@ export default function Workspace({ case_, initialDraft }: Props)
 	useEffect(() =>
 	{
 		if(editor && initialDraft && editor.isEmpty)
-			editor.commands.setContent(`<p>${initialDraft.replace(/\n\n/g, "</p><p>").replace(/\n/g, "<br>")}</p>`);
+			editor.commands.setContent(marked.parse(initialDraft) as string);
 	}, [editor, initialDraft]);
 
 	async function handleSaveDraft()
@@ -192,7 +194,7 @@ export default function Workspace({ case_, initialDraft }: Props)
 									<ResearchPanel caseId={case_.id} caseName={case_.name} />
 								</TabsContent>
 								<TabsContent value="ai" className="mt-4">
-									<AiPanel case_={case_} editor={editor} />
+									<AiPanel case_={case_} editor={editor} side={side} />
 								</TabsContent>
 							</Tabs>
 						</CardContent>
