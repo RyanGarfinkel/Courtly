@@ -26,6 +26,14 @@ The system is **not a chatbot**. It is a structured, multi-agent pipeline that:
 
 ---
 
+## Development Principle: Always Use Agents
+
+When implementing any feature that involves AI reasoning, analysis, classification, summarization, or decision-making — **implement it as a stateless agent function in `backend/app/agents/`**, not as inline logic in controllers or services. Controllers handle HTTP only. Services orchestrate. Agents do the thinking.
+
+If a task could be done by an LLM, it should be done by an agent.
+
+---
+
 ## Core Principles
 
 - Every claim must be **grounded in evidence**

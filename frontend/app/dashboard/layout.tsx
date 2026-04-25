@@ -1,13 +1,10 @@
 import { auth0 } from "@/lib/auth0";
-import { redirect } from "next/navigation";
 import Link from "next/link";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode })
 {
 	const session = await auth0.getSession();
-	if(!session) redirect("/");
-
-	const { user } = session;
+	const user = session?.user ?? null;
 
 	return (
 		<div className="flex flex-col min-h-screen bg-background text-foreground">
@@ -19,13 +16,27 @@ export default async function DashboardLayout({ children }: { children: React.Re
 					Courtly
 				</Link>
 				<div className="flex items-center gap-4">
-					<span className="text-sm text-muted-foreground">{user.email}</span>
-					<Link
-						href="/auth/logout"
-						className="text-sm font-medium hover:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors"
-					>
-						Sign out
-					</Link>
+					{user ? (
+						<>
+							<span className="text-sm text-muted-foreground">{user.email}</span>
+							<Link
+								href="/auth/logout"
+								className="text-sm font-medium hover:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors"
+							>
+								Sign out
+							</Link>
+						</>
+					) : (
+						<>
+							<span className="text-sm text-muted-foreground">Guest</span>
+							<Link
+								href="/auth/login?returnTo=/dashboard"
+								className="text-sm font-medium hover:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors"
+							>
+								Sign in
+							</Link>
+						</>
+					)}
 				</div>
 			</header>
 			{children}

@@ -1,5 +1,3 @@
-import { auth0 } from "@/lib/auth0";
-import { redirect } from "next/navigation";
 import CasesGrid from "./cases-grid";
 
 interface Case
@@ -55,9 +53,6 @@ const PAGE_SIZE = 9;
 
 export default async function Dashboard({ searchParams }: { searchParams?: Promise<SearchParams> })
 {
-	const session = await auth0.getSession();
-	if(!session) redirect("/");
-
 	const params = await searchParams;
 	const query = params?.q?.trim() ?? "";
 	const rawPage = Number(params?.page ?? "1");

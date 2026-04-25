@@ -100,7 +100,17 @@ export default function AiPanel({ case_, editor }: Props)
 				body: JSON.stringify(bodyMap[action]),
 			});
 			const data = await res.json();
+			if(!res.ok)
+			{
+				console.error("AI action failed:", JSON.stringify(data, null, 2));
+				setPreview({ action, result: `Error: ${res.status} — ${JSON.stringify(data.detail ?? data)}` });
+				return;
+			}
 			setPreview({ action, result: data.result });
+		}
+		catch
+		{
+			setPreview({ action, result: "Failed to reach the backend. Make sure the server is running." });
 		}
 		finally
 		{

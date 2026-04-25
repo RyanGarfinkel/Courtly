@@ -5,7 +5,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PanelRightClose, PanelRightOpen } from "lucide-react";
 import { useEditor, EditorContent } from "@tiptap/react";
-import { Underline } from "@tiptap/extension-underline";
 import Placeholder from "@tiptap/extension-placeholder";
 import StarterKit from "@tiptap/starter-kit";
 import ResearchPanel from "./research-panel";
@@ -70,7 +69,6 @@ export default function Workspace({ case_, initialDraft }: Props)
 		immediatelyRender: false,
 		extensions: [
 			StarterKit,
-			Underline,
 			Placeholder.configure({ placeholder: "Your Honor, I respectfully submit that..." }),
 		],
 		editorProps: {

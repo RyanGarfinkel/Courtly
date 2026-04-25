@@ -1,7 +1,6 @@
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
-import { auth0 } from "@/lib/auth0";
 import Workspace from "./workspace";
 
 interface Case
@@ -49,9 +48,6 @@ type Props = { params: Promise<{ id: string }> };
 
 export default async function BriefPage({ params }: Props)
 {
-	const session = await auth0.getSession();
-	if(!session) redirect("/");
-
 	const { id } = await params;
 	const [c, initialDraft] = await Promise.all([getCase(id), getExistingDraft(id)]);
 	if(!c) notFound();

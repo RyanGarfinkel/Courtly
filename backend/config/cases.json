@@ -4,14 +4,15 @@
     "name": "Marbury v. Madison",
     "year": 1803,
     "category": "Judicial Review",
-    "summary": "When President Adams appointed William Marbury as a justice of the peace but the commission was never delivered, Marbury petitioned the Supreme Court directly for a writ of mandamus. Chief Justice Marshall held that while Marbury was entitled to his commission, the Court lacked jurisdiction because the relevant provision of the Judiciary Act of 1789 was unconstitutional. This decision established the foundational doctrine of judicial review — the power of federal courts to strike down laws that conflict with the Constitution."
+    "summary": "When President Adams appointed William Marbury as a justice of the peace but the commission was never delivered, Marbury petitioned the Supreme Court directly for a writ of mandamus. Chief Justice Marshall held that while Marbury was entitled to his commission, the Court lacked jurisdiction because the relevant provision of the Judiciary Act of 1789 was unconstitutional. This decision established the foundational doctrine of judicial review \u2014 the power of federal courts to strike down laws that conflict with the Constitution."
   },
   {
     "id": "fletcher-v-peck",
     "name": "Fletcher v. Peck",
     "year": 1810,
     "category": "Contract Clause",
-    "summary": "Following a massive land fraud scheme in Georgia, the state legislature attempted to repeal the land grants, voiding subsequent sales to innocent third parties. The Court ruled that the repeal violated the Contract Clause of the Constitution. This was the first time the Supreme Court struck down a state law on constitutional grounds, establishing strict protections for property rights and legal contracts against state interference."
+    "summary": "Following a massive land fraud scheme in Georgia, the state legislature attempted to repeal the land grants, voiding subsequent sales to innocent third parties. The Court ruled that the repeal violated the Contract Clause of the Constitution. This was the first time the Supreme Court struck down a state law on constitutional grounds, establishing strict protections for property rights and legal contracts against state interference.",
+    "citation": "10 U.S. 87"
   },
   {
     "id": "mcculloch-v-maryland",
@@ -144,7 +145,7 @@
     "name": "New York Times Co. v. Sullivan",
     "year": 1964,
     "category": "First Amendment",
-    "summary": "An Alabama official sued the New York Times over a full-page civil rights advertisement that contained minor factual errors, winning a $500,000 libel judgment under state law. The Court reversed unanimously, holding that the First Amendment sharply limits defamation suits by public officials, who must prove 'actual malice' — knowledge of falsity or reckless disregard for the truth. This decision created a powerful constitutional shield for press freedom and robust political debate."
+    "summary": "An Alabama official sued the New York Times over a full-page civil rights advertisement that contained minor factual errors, winning a $500,000 libel judgment under state law. The Court reversed unanimously, holding that the First Amendment sharply limits defamation suits by public officials, who must prove 'actual malice' \u2014 knowledge of falsity or reckless disregard for the truth. This decision created a powerful constitutional shield for press freedom and robust political debate."
   },
   {
     "id": "griswold-v-connecticut",
@@ -214,7 +215,7 @@
     "name": "United States v. Nixon",
     "year": 1974,
     "category": "Executive Power",
-    "summary": "A special prosecutor subpoenaed White House tape recordings relevant to the Watergate cover-up, and President Nixon claimed executive privilege to withhold them. The Court ruled unanimously that while the Constitution recognizes executive privilege, it is not absolute and must yield to the demonstrated need for evidence in a criminal proceeding. Nixon's compliance with the ruling led directly to his resignation, cementing the principle that no one — including the President — is above the law."
+    "summary": "A special prosecutor subpoenaed White House tape recordings relevant to the Watergate cover-up, and President Nixon claimed executive privilege to withhold them. The Court ruled unanimously that while the Constitution recognizes executive privilege, it is not absolute and must yield to the demonstrated need for evidence in a criminal proceeding. Nixon's compliance with the ruling led directly to his resignation, cementing the principle that no one \u2014 including the President \u2014 is above the law."
   },
   {
     "id": "regents-v-bakke",

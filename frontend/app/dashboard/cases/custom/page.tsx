@@ -4,68 +4,42 @@ import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbP
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
 export default function CustomCasePage()
 {
+	const router = useRouter();
 	const [name, setName] = useState("");
-	const [argument, setArgument] = useState("");
-	const [submitted, setSubmitted] = useState(false);
+	const [summary, setSummary] = useState("");
 	const [submitting, setSubmitting] = useState(false);
-	const [drafting, setDrafting] = useState(false);
-
-	async function handleDraft()
-	{
-		if(!name.trim()) return;
-		setDrafting(true);
-		try
-		{
-			const res = await fetch(`${API_URL}/brief/draft`, {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({
-					case_name: name,
-					case_summary: argument || "Custom case submitted by the user.",
-					category: "Custom",
-					year: new Date().getFullYear(),
-					citation: "N/A",
-					user_notes: argument,
-				}),
-			});
-			const data = await res.json();
-			setArgument(data.draft);
-		}
-		finally
-		{
-			setDrafting(false);
-		}
-	}
+	const [error, setError] = useState("");
 
 	async function handleSubmit(e: React.FormEvent)
 	{
 		e.preventDefault();
-		if(!name.trim() || !argument.trim()) return;
+		if(!name.trim() || !summary.trim()) return;
 
 		setSubmitting(true);
-		// TODO: POST to /hearing/start with { caseId: "custom", caseName: name, argument }
-		await new Promise(r => setTimeout(r, 1500));
-		setSubmitting(false);
-		setSubmitted(true);
-	}
-
-	if(submitted)
-	{
-		return (
-			<main className="flex-1 px-8 py-10">
-				<div className="max-w-3xl mx-auto rounded-lg border border-border p-6 text-center">
-					<p className="text-muted-foreground text-sm mb-1">The Court has received your argument.</p>
-					<p className="font-semibold">The justices are deliberating.</p>
-					<p className="text-xs text-muted-foreground mt-4">Judge responses coming soon.</p>
-				</div>
-			</main>
-		);
+		setError("");
+		try
+		{
+			const res = await fetch(`${API_URL}/cases`, {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ name: name.trim(), summary: summary.trim() }),
+			});
+			if(!res.ok) throw new Error("Failed to create case");
+			const newCase = await res.json();
+			router.push(`/dashboard/cases/${newCase.id}/brief`);
+		}
+		catch
+		{
+			setError("Something went wrong. Make sure the backend is running.");
+			setSubmitting(false);
+		}
 	}
 
 	return (
@@ -85,7 +59,7 @@ export default function CustomCasePage()
 
 				<div className="mb-8">
 					<h1 className="text-2xl font-bold mb-2">Build your own case</h1>
-					<p className="text-muted-foreground">Define a custom legal scenario and present it to the nine-justice panel.</p>
+					<p className="text-muted-foreground">Define a custom legal scenario to bring before the nine-justice panel.</p>
 				</div>
 
 				<form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -100,36 +74,27 @@ export default function CustomCasePage()
 					</div>
 
 					<div className="flex flex-col gap-2">
-						<div className="flex items-center justify-between">
-							<label htmlFor="argument" className="text-sm font-medium">Present your argument</label>
-							<Button
-								type="button"
-								variant="outline"
-								size="sm"
-								onClick={handleDraft}
-								disabled={drafting || !name.trim()}
-							>
-								{drafting ? "Drafting..." : "Draft with AI"}
-							</Button>
-						</div>
+						<label htmlFor="summary" className="text-sm font-medium">Case summary</label>
 						<p className="text-xs text-muted-foreground">
-							Describe the facts, the legal question at issue, and your position.
+							Describe the facts and the legal question at issue. You'll write your argument on the next page.
 						</p>
 						<Textarea
-							id="argument"
-							value={argument}
-							onChange={e => setArgument(e.target.value)}
-							rows={10}
-							placeholder="Your Honor, I respectfully submit that..."
+							id="summary"
+							value={summary}
+							onChange={e => setSummary(e.target.value)}
+							rows={6}
+							placeholder="Describe what happened and what constitutional or legal question is at stake..."
 						/>
 					</div>
 
+					{error && <p className="text-sm text-destructive">{error}</p>}
+
 					<Button
 						type="submit"
-						disabled={submitting || !name.trim() || !argument.trim()}
+						disabled={submitting || !name.trim() || !summary.trim()}
 						className="self-end"
 					>
-						{submitting ? "Submitting..." : "Submit to the Court"}
+						{submitting ? "Creating..." : "Continue to brief →"}
 					</Button>
 				</form>
 			</div>
