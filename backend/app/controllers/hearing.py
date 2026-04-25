@@ -1,7 +1,6 @@
-from app.agents.hearing_assistant import summarize as assist_summarize, answer_question as assist_answer
+from app.agents.hearing_assistant import summarize as assist_summarize, answer_question as assist_answer, generate_hints
 from app.orchestrators.hearing import start as orchestrate_start, process_turn
 from app.services.hearing_store import create as store_create, get as store_get, update as store_update
-from app.agents.argument_graph import map_arguments
 from app.models.hearing import HearingMessage, HearingRuling
 from app.agents.stress_test import analyze
 from pydantic import BaseModel
@@ -94,16 +93,15 @@ def stress_test(req: StressTestRequest):
 	return result
 
 
-class ArgumentMapRequest(BaseModel):
+class HintRequest(BaseModel):
 	hearing_id: str
-	draft: str
-	question: str = ''
+	question: str
 
 
-@router.post('/hearing/argument-map')
-def argument_map(req: ArgumentMapRequest):
+@router.post('/hearing/hint')
+def get_hint(req: HintRequest):
 	state = store_get(req.hearing_id)
 	if not state:
 		raise HTTPException(status_code=404, detail='Hearing not found')
-	result = map_arguments(req.draft, req.question, state.brief, state.case_name)
-	return result
+	hints = generate_hints(req.question, state.messages, state.case_name, state.brief)
+	return {'hints': hints}

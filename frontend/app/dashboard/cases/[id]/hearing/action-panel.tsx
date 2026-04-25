@@ -27,19 +27,12 @@ interface HearingRuling
 	swing_justices: string[];
 }
 
-interface ArgumentMapData
-{
-	claims: { id: string; text: string; strength: number }[];
-	counters: { id: string; text: string; attacks: string[]; severity: 'high' | 'medium' | 'low' }[];
-}
-
 interface Props
 {
 	hearingId: string;
 	phase: string;
-	pendingQuestion: { speaker: string; content: string } | null;
+	pendingQuestion: { id: string; speaker: string; content: string } | null;
 	onSubmit: (response: string) => void;
-	onMapGenerated: (data: ArgumentMapData) => void;
 	loading: boolean;
 	ruling: HearingRuling | null;
 	side: 'plaintiff' | 'defendant';
@@ -52,7 +45,7 @@ const VIEWS: { id: View; label: string }[] = [
 	{ id: 'clerk', label: 'Law Clerk' },
 ];
 
-export default function ActionPanel({ hearingId, phase, pendingQuestion, onSubmit, onMapGenerated, loading, ruling, side }: Props)
+export default function ActionPanel({ hearingId, phase, pendingQuestion, onSubmit, loading, ruling, side }: Props)
 {
 	const [view, setView] = useState<View>('studio');
 
@@ -78,20 +71,22 @@ export default function ActionPanel({ hearingId, phase, pendingQuestion, onSubmi
 				))}
 			</div>
 
-			<div className="flex-1 overflow-y-auto">
-				{view === 'studio'
-					? (
-						<ResponseStudio
-							hearingId={hearingId}
-							pendingQuestion={pendingQuestion}
-							phase={phase}
-							onSubmit={onSubmit}
-							onMapGenerated={onMapGenerated}
-							loading={loading}
-						/>
-					)
-					: <AssistantPanel hearingId={hearingId} />
-				}
+			<div className="flex-1 flex flex-col min-h-0">
+				<div className={cn('flex-1 overflow-y-auto', view !== 'studio' && 'hidden')}>
+					<ResponseStudio
+						hearingId={hearingId}
+						pendingQuestion={pendingQuestion}
+						phase={phase}
+						onSubmit={onSubmit}
+						loading={loading}
+					/>
+				</div>
+				<div className={cn('flex-1 overflow-y-auto', view !== 'clerk' && 'hidden')}>
+					<AssistantPanel
+						hearingId={hearingId}
+						pendingQuestion={pendingQuestion}
+					/>
+				</div>
 			</div>
 		</div>
 	);

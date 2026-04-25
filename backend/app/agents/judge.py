@@ -80,6 +80,33 @@ Return nothing but the integer.'''
 		return 0
 
 
+def react_to_response(
+	judge: JudgeConfig,
+	question: str,
+	user_response: str,
+	score: int,
+) -> str:
+	strength = "excellent" if score == 2 else "good" if score == 1 else "fair" if score == 0 else "weak" if score == -1 else "poor"
+	
+	prompt = f'''{judge.system_prompt}
+
+You asked the following question during oral argument:
+"{question}"
+
+The attorney responded:
+"{user_response}"
+
+You have evaluated this answer as "{strength}" (score: {score} out of 2).
+
+Provide a brief, one-sentence reaction to this answer from the bench. 
+If the answer was good or excellent, acknowledge its strength or move on with a brief "Thank you, counsel."
+If the answer was fair, weak, or poor, explain briefly why you found it unsatisfying or what they failed to address.
+
+Keep it very brief (one sentence) and in your specific judicial voice. Do not use any introductory phrases like "The judge says." Just the quote.'''
+
+	return _gemini.generate(prompt)
+
+
 def deliberate(
 	judge: JudgeConfig,
 	case_name: str,

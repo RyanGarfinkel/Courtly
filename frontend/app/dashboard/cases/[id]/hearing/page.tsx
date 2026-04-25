@@ -12,14 +12,15 @@ interface Case
 	citation: string;
 }
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000';
+
 async function getCase(id: string): Promise<Case | null>
 {
 	try
 	{
-		const res = await fetch(`${process.env.API_URL ?? 'http://localhost:8000'}/cases`, { cache: 'no-store' });
+		const res = await fetch(`${API_URL}/cases/${id}`, { cache: 'no-store' });
 		if(!res.ok) return null;
-		const cases: Case[] = await res.json();
-		return cases.find(c => c.id === id) ?? null;
+		return await res.json();
 	}
 	catch
 	{
@@ -41,9 +42,9 @@ export default async function HearingPage({ params, searchParams }: Props)
 	if(!c || !hearing_id) notFound();
 
 	return (
-		<main className="flex-1 flex flex-col px-8 py-10">
-			<div className="max-w-4xl mx-auto w-full flex flex-col flex-1">
-				<Breadcrumb className="mb-6">
+		<main className="h-[calc(100vh-4rem)] flex flex-col px-8 py-6 overflow-hidden">
+			<div className="max-w-7xl mx-auto w-full flex flex-col flex-1 min-h-0">
+				<Breadcrumb className="mb-4 shrink-0">
 					<BreadcrumbList>
 						<BreadcrumbItem>
 							<BreadcrumbLink href="/dashboard">Cases</BreadcrumbLink>
