@@ -84,6 +84,11 @@ export default function CasesGrid({ cases: initialCases, page, totalCount, total
 	// Carousel for displayed cases
 	const [displayedIndex, setDisplayedIndex] = useState<number>(0);
 	const displayedTrackRef = useRef<HTMLDivElement | null>(null);
+	
+	// Load more state
+	const [displayedCases, setDisplayedCases] = useState<Case[]>(initialCases);
+	const [loadMoreLoading, setLoadMoreLoading] = useState(false);
+	const [hasMoreResults, setHasMoreResults] = useState(initialCases.length === 6);
 
 	// ensure popularIndex stays in bounds if popularCases changes (3 per page)
 	useEffect(() => {
@@ -124,11 +129,6 @@ export default function CasesGrid({ cases: initialCases, page, totalCount, total
 		const pageWidth = track.clientWidth;
 		track.scrollTo({ left: displayedIndex * (pageWidth + 16), behavior: 'smooth' });
 	}, [displayedIndex]);
-	
-	// Load more state
-	const [displayedCases, setDisplayedCases] = useState<Case[]>(initialCases);
-	const [loadMoreLoading, setLoadMoreLoading] = useState(false);
-	const [hasMoreResults, setHasMoreResults] = useState(initialCases.length === 6);
 
 	// Animation visibility: only show if no search inputs AND no results (initial or external)
 	const isSearching = Boolean(searchQuery || issue || yearFrom || yearTo || keyword);
