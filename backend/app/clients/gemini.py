@@ -2,7 +2,7 @@ import os
 
 from google import genai
 
-MODEL = "gemini-3.1-flash"
+MODEL = "gemini-3.1-flash-lite-preview"
 
 
 class GeminiClient:

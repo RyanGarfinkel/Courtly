@@ -33,7 +33,7 @@ export default function CustomCasePage()
 			});
 			if(!res.ok) throw new Error("Failed to create case");
 			const newCase = await res.json();
-			router.push(`/dashboard/cases/${newCase.id}/brief`);
+			router.push(`/dashboard/cases/${newCase.id}`);
 		}
 		catch
 		{
