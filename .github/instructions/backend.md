@@ -37,7 +37,7 @@ backend/
 
 ## External Integrations
 
-- **CourtListener** — case law retrieval. Client lives at `app/clients/courtlistener.py`. API key loaded from `COURTLISTENER_API_KEY` env var.
+- **CourtListener** — case law retrieval via the `courtlistener-api-client` SDK. Client lives at `app/clients/courtlistener.py`. API key loaded from `COURTLISTENER_API_KEY` env var. Use `CourtListener(api_token=...)` as the entry point; endpoints support `.get(id)` and `.list(**filters)` with automatic pagination.
 - **Gemini / Gemma** — LLM calls via `google-genai` SDK. Client lives at `app/clients/gemini.py`. API key loaded from `GEMINI_API_KEY` env var. Use Gemini for cloud inference, Gemma for open-weight model runs.
 
 ## Authentication

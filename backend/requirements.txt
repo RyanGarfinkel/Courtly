@@ -4,3 +4,4 @@ pydantic
 google-genai
 python-dotenv
 python-jose[cryptography]
+courtlistener-api-client

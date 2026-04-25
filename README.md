@@ -1,5 +1,5 @@
 # Courtly
-
+    
 ## Frontend
 
 ```bash
@@ -14,9 +14,10 @@ Runs on http://localhost:3000
 
 ```bash
 cd backend
-python3 -m venv .venv        # first time only
-.venv/bin/pip install -r requirements.txt  # first time only
-.venv/bin/uvicorn main:app --reload
+python3 -m venv .venv              # first time only
+source .venv/bin/activate
+pip install -r requirements.txt    # first time only
+uvicorn main:app --reload
 ```
 
 Runs on http://localhost:8000
