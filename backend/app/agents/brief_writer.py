@@ -11,13 +11,12 @@ Case: {case_name} ({citation}, {year})
 Category: {category}
 Background: {case_summary}{notes_section}
 
-Draft a compelling legal argument structured as:
-1. Statement of the Question Presented
-2. Your position and core argument
-3. Constitutional text, precedent, and policy reasoning
-4. Conclusion
+Review the facts and issues at stake in the case. Provide hints about the better legal arguments for the opponent's side, structured as:
+1. Key weaknesses in the presented case
+2. Stronger arguments the opponent could make
+3. Relevant precedents or constitutional principles supporting the opponent
 
-Write in formal legal prose, 4-5 paragraphs. Be specific and persuasive. Do not use placeholder text."""
+Write in short, concise bullet point form (between 5-10 bullet points, each one sentence). Do not include any header and get straight to the bullet points. Be objective and analytical."""
 
 	return _gemini.generate(prompt)
 
