@@ -6,16 +6,11 @@ Frontend code lives in `frontend/`. When working on any frontend code (component
 
 ## Backend Tasks
 
-Backend code lives in `backend/`. It is a Python FastAPI service with the following structure:
+Backend code lives in `backend/`. When working on any backend code, follow the instructions in [.github/instructions/backend.md](.github/instructions/backend.md).
 
-- `app/controllers/` — HTTP route handlers (FastAPI routers)
-- `app/services/` — business logic
-- `app/models/` — Pydantic models
-- `app/agents/` — individual agent implementations (retriever, plaintiff, defense, etc.)
-- `app/orchestrators/` — agent pipeline orchestration
-- `main.py` — app entry point
+## Infrastructure
 
-Run with: `cd backend && .venv/bin/uvicorn main:app --reload`
+Hosting and external platform details are documented in [.github/instructions/infra.md](.github/instructions/infra.md).
 
 ---
 

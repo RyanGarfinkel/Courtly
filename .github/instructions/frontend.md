@@ -30,6 +30,14 @@ applyTo: "**/*.tsx,**/*.ts,**/app/**,**/components/**,**/pages/**"
 - No inline `style` props unless absolutely necessary (e.g., dynamic values not expressible in Tailwind)
 - **No hardcoded colors** — always use CSS variables (e.g., `bg-background`, `text-foreground`, `border-border`). Define all colors as variables in `globals.css` and reference them via Tailwind utilities or `var(--token-name)`
 
+## Authentication
+- Auth0 via `@auth0/nextjs-auth0`
+- Auth route handler at `app/api/auth/[auth0]/route.ts` — handles all Auth0 callbacks, do not add logic here
+- Wrap `app/layout.tsx` with `UserProvider` from `@auth0/nextjs-auth0/client`
+- Route protection via `middleware.ts` at `frontend/middleware.ts` using `withMiddlewareAuthRequired`
+- Access session on the client with `useUser()`, on the server with `getSession()`
+- Auth0 env vars: `AUTH0_SECRET`, `AUTH0_BASE_URL`, `AUTH0_ISSUER_BASE_URL`, `AUTH0_CLIENT_ID`, `AUTH0_CLIENT_SECRET`
+
 ## File & Component Conventions
 - One component per file
 - File names: single word preferred; PascalCase for components, lowercase for pages/routes

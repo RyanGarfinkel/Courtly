@@ -1,5 +1,6 @@
 fastapi
 uvicorn[standard]
 pydantic
-anthropic
+google-genai
 python-dotenv
+python-jose[cryptography]
