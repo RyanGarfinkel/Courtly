@@ -19,10 +19,9 @@ async function getCase(id: string): Promise<Case | null>
 {
 	try
 	{
-		const res = await fetch(`${process.env.API_URL ?? "http://localhost:8000"}/cases`, { cache: "no-store" });
+		const res = await fetch(`${process.env.API_URL ?? "http://localhost:8000"}/cases/${id}`, { cache: "no-store" });
 		if(!res.ok) return null;
-		const cases: Case[] = await res.json();
-		return cases.find(c => c.id === id) ?? null;
+		return await res.json();
 	}
 	catch
 	{

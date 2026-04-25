@@ -18,12 +18,12 @@ QUOTE: none
 EXPLANATION: none"""
 
 
-def run(query: str, court: str = "scotus", limit: int = 5) -> list[LegalSource]:
+def run(query: str, court: str = "scotus", limit: int = 5, offset: int = 0) -> list[LegalSource]:
     cl_client = CourtListenerClient()
     gemini_client = GeminiClient()
 
     try:
-        results = cl_client.search_opinions(query, court=court, limit=limit)
+        results = cl_client.search_opinions(query, court=court, limit=limit, offset=offset)
         sources = []
 
         for result in results:

@@ -3,7 +3,7 @@
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
@@ -35,7 +35,7 @@ export default function ResearchPanel({ caseId, caseName }: Props)
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState(false);
 
-	async function loadResearch()
+	const loadResearch = useCallback(async () =>
 	{
 		setLoading(true);
 		setError(false);
@@ -53,12 +53,15 @@ export default function ResearchPanel({ caseId, caseName }: Props)
 		{
 			setLoading(false);
 		}
-	}
+	}, [caseId, caseName]);
 
 	useEffect(() =>
 	{
-		loadResearch();
-	}, [caseId]);
+		const run = async () => {
+			await loadResearch();
+		};
+		run();
+	}, [loadResearch]);
 
 	if(loading)
 	{
@@ -89,7 +92,7 @@ export default function ResearchPanel({ caseId, caseName }: Props)
 		return (
 			<div className="flex flex-col items-center justify-center py-10 gap-3 text-center">
 				<p className="text-sm text-muted-foreground">No citations found for this case.</p>
-				<Button variant="outline" size="sm" onClick={loadResearch}>Retry</Button>
+				<Button variant="outline" size="sm" onClick={loadResearch}>Try again</Button>
 			</div>
 		);
 	}
@@ -114,7 +117,7 @@ export default function ResearchPanel({ caseId, caseName }: Props)
 						</AccordionTrigger>
 						<AccordionContent className="flex flex-col gap-3 pb-4">
 							<div className="border-l-2 border-border pl-3">
-								<p className="text-xs italic text-muted-foreground leading-relaxed">"{s.relevant_quote}"</p>
+								<p className="text-xs italic text-muted-foreground leading-relaxed">&quot;{s.relevant_quote}&quot;</p>
 							</div>
 							<div>
 								<p className="text-xs font-medium mb-1">Why it matters</p>

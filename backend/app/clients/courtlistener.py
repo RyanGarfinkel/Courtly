@@ -16,6 +16,7 @@ class CourtListenerClient:
         query: str,
         court: str = DEFAULT_COURT,
         limit: int = DEFAULT_LIMIT,
+        offset: int = 0,
     ) -> list[dict]:
         iterator: ResourceIterator = self._client.search.list(
             type="o",
@@ -24,8 +25,13 @@ class CourtListenerClient:
             order_by="score desc",
         )
         results = []
+        idx = 0
         for result in iterator:
+            if idx < offset:
+                idx += 1
+                continue
             results.append(result)
+            idx += 1
             if len(results) >= limit:
                 break
         return results

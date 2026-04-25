@@ -46,6 +46,28 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+
+  --animate-arc-x: arcMoveX 27000ms linear infinite both;
+  --animate-arc-y: arcMoveY 27000ms ease-in-out infinite both;
+
+  @keyframes arcMoveX {
+    0% { transform: translateX(-80vw); }
+    100% { transform: translateX(80vw); }
+  }
+
+  @keyframes arcMoveY {
+    0%, 100% { 
+      transform: translateY(-20px) scale(0.6); 
+      opacity: 0;
+    }
+    15%, 85% {
+      opacity: 0.1;
+    }
+    50% { 
+      transform: translateY(180px) scale(1.05); 
+      opacity: 0.5;
+    }
+  }
 }
 
 :root {
@@ -128,6 +150,7 @@
     @apply font-sans;
   }
 }
+
 .tiptap-editor .ProseMirror {
   outline: none;
   min-height: 480px;
