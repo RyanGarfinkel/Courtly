@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import type { Editor } from "@tiptap/react";
+import { marked } from "marked";
 import { useState } from "react";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
@@ -21,6 +22,7 @@ interface Props
 {
 	case_: Case;
 	editor: Editor | null;
+	side: "plaintiff" | "defendant";
 }
 
 type Action = "draft" | "expand" | "strengthen" | "counter";
@@ -28,8 +30,8 @@ type Action = "draft" | "expand" | "strengthen" | "counter";
 const ACTIONS: { id: Action; label: string; description: string }[] = [
 	{
 		id: "draft",
-		label: "Draft for me",
-		description: "Generate a complete brief from the case details.",
+		label: "Get a Hint",
+		description: "Get insight into the key legal concepts at stake.",
 	},
 	{
 		id: "expand",
@@ -48,7 +50,7 @@ const ACTIONS: { id: Action; label: string; description: string }[] = [
 	},
 ];
 
-export default function AiPanel({ case_, editor }: Props)
+export default function AiPanel({ case_, editor, side }: Props)
 {
 	const [notes, setNotes] = useState("");
 	const [activeAction, setActiveAction] = useState<Action | null>(null);
@@ -100,7 +102,17 @@ export default function AiPanel({ case_, editor }: Props)
 				body: JSON.stringify(bodyMap[action]),
 			});
 			const data = await res.json();
+			if(!res.ok)
+			{
+				console.error("AI action failed:", JSON.stringify(data, null, 2));
+				setPreview({ action, result: `Error: ${res.status} — ${JSON.stringify(data.detail ?? data)}` });
+				return;
+			}
 			setPreview({ action, result: data.result });
+		}
+		catch
+		{
+			setPreview({ action, result: "Failed to reach the backend. Make sure the server is running." });
 		}
 		finally
 		{
@@ -111,7 +123,7 @@ export default function AiPanel({ case_, editor }: Props)
 	function applyToEditor()
 	{
 		if(!preview || !editor) return;
-		editor.commands.setContent(`<p>${preview.result.replace(/\n\n/g, "</p><p>").replace(/\n/g, "<br>")}</p>`);
+		editor.commands.setContent(marked.parse(preview.result) as string);
 		setPreview(null);
 	}
 
@@ -155,7 +167,10 @@ export default function AiPanel({ case_, editor }: Props)
 							Dismiss
 						</button>
 					</div>
-					<p className="text-sm leading-relaxed whitespace-pre-wrap">{preview.result}</p>
+					<div
+						className="text-sm leading-relaxed prose prose-sm max-w-none"
+						dangerouslySetInnerHTML={{ __html: marked.parse(preview.result) }}
+					/>
 					{preview.action !== "counter" && (
 						<Button size="sm" onClick={applyToEditor}>Apply to editor</Button>
 					)}

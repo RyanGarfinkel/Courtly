@@ -8,10 +8,10 @@ router = APIRouter()
 
 class DraftRequest(BaseModel):
 	case_name: str
-	case_summary: str
-	category: str
-	year: int
-	citation: str
+	case_summary: str = ""
+	category: str = ""
+	year: int = 0
+	citation: str = ""
 	user_notes: str = ""
 
 

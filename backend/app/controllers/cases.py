@@ -1,13 +1,27 @@
-import json
-import math
-import os
-import random
+from pydantic import BaseModelimport random
 
 from fastapi import APIRouter, Query
+from app.agents import case_discovery
+from pathlib import Path
+import math
+import json
+import re
 
-router = APIRouter(prefix="/cases", tags=["cases"])
+router = APIRouter()
 
-CASES_PATH = os.path.join(os.path.dirname(__file__), "../../config/cases.json")
+_PRESET_PATH = Path(__file__).parent.parent.parent / "config" / "cases.json"
+_CUSTOM_PATH = Path(__file__).parent.parent.parent / "data" / "cases.json"
+
+
+def _load_all() -> list:
+	preset = json.loads(_PRESET_PATH.read_text())
+	custom = json.loads(_CUSTOM_PATH.read_text()) if _CUSTOM_PATH.exists() else []
+	return preset + custom
+
+
+def _save_custom(cases: list) -> None:
+	_CUSTOM_PATH.parent.mkdir(exist_ok=True)
+	_CUSTOM_PATH.write_text(json.dumps(cases, indent=2))
 
 def _matches_case(case, query: str) -> bool:
     if not query:
@@ -25,6 +39,31 @@ def _matches_case(case, query: str) -> bool:
 from app.agents import case_search
 
 @router.get("")
+def _matches(case: dict, query: str) -> bool:
+	if not query:
+		return True
+	q = query.lower()
+	return q in " ".join([
+		case.get("name", ""),
+		case.get("category", ""),
+		case.get("summary", ""),
+		case.get("citation", ""),
+	]).lower()
+
+
+def _slugify(name: str) -> str:
+	return re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-")
+
+
+class CaseCreate(BaseModel):
+	name: str
+	summary: str
+	category: str = "Custom"
+	year: int = 0
+	citation: str = ""
+
+
+@router.get("/cases")
 def get_cases(
     q: str | None = Query(default=None, description="Case search query"),
     page: int | None = Query(default=None, ge=1, description="Page number"),

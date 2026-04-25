@@ -5,12 +5,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PanelRightClose, PanelRightOpen } from "lucide-react";
 import { useEditor, EditorContent } from "@tiptap/react";
-import { Underline } from "@tiptap/extension-underline";
 import Placeholder from "@tiptap/extension-placeholder";
 import StarterKit from "@tiptap/starter-kit";
 import ResearchPanel from "./research-panel";
 import AiPanel from "./ai-panel";
+import { marked } from "marked";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
@@ -29,6 +30,7 @@ interface Props
 {
 	case_: Case;
 	initialDraft: string | null;
+	side: "plaintiff" | "defendant";
 }
 
 interface ToolbarButtonProps
@@ -60,33 +62,39 @@ function ToolbarButton({ onClick, active, children }: ToolbarButtonProps)
 	);
 }
 
-export default function Workspace({ case_, initialDraft }: Props)
+export default function Workspace({ case_, initialDraft, side }: Props)
 {
 	const [panelOpen, setPanelOpen] = useState(true);
 	const [saving, setSaving] = useState(false);
+	const [submitting, setSubmitting] = useState(false);
+	const [editorEmpty, setEditorEmpty] = useState(true);
 	const [savedAt, setSavedAt] = useState<string | null>(null);
+	const router = useRouter();
 
 	const editor = useEditor({
 		immediatelyRender: false,
 		extensions: [
 			StarterKit,
-			Underline,
 			Placeholder.configure({ placeholder: "Your Honor, I respectfully submit that..." }),
 		],
 		editorProps: {
 			attributes: { class: "tiptap-editor" },
 		},
+		onUpdate: ({ editor: e }) => setEditorEmpty(e.isEmpty),
 	});
 
 	useEffect(() =>
 	{
 		if(editor && initialDraft && editor.isEmpty)
-			editor.commands.setContent(`<p>${initialDraft.replace(/\n\n/g, "</p><p>").replace(/\n/g, "<br>")}</p>`);
+		{
+			editor.commands.setContent(marked.parse(initialDraft) as string);
+			setEditorEmpty(false);
+		}
 	}, [editor, initialDraft]);
 
 	async function handleSaveDraft()
 	{
-		if(!editor || editor.isEmpty) return;
+		if(!editor || editorEmpty) return;
 		setSaving(true);
 		try
 		{
@@ -105,9 +113,29 @@ export default function Workspace({ case_, initialDraft }: Props)
 
 	async function handleSubmit()
 	{
-		if(!editor || editor.isEmpty) return;
-		// TODO: POST to /hearing/start
-		alert("Brief submitted — judge deliberation coming soon.");
+		if(!editor || editorEmpty) return;
+		setSubmitting(true);
+		try
+		{
+			const res = await fetch(`${API_URL}/hearing/start`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					case_id: case_.id,
+					case_name: case_.name,
+					case_summary: case_.summary,
+					brief: editor.getText(),
+					side,
+				}),
+			});
+			const data = await res.json();
+			sessionStorage.setItem(`hearing_${data.hearing_id}`, JSON.stringify(data));
+			router.push(`/dashboard/cases/${case_.id}/hearing?hearing_id=${data.hearing_id}&side=${side}`);
+		}
+		finally
+		{
+			setSubmitting(false);
+		}
 	}
 
 	return (
@@ -169,11 +197,11 @@ export default function Workspace({ case_, initialDraft }: Props)
 				</div>
 
 				<div className="flex items-center justify-between">
-					<Button variant="outline" onClick={handleSaveDraft} disabled={saving || !editor || editor.isEmpty}>
+					<Button variant="outline" onClick={handleSaveDraft} disabled={saving || !editor || editorEmpty}>
 						{saving ? "Saving..." : "Save draft"}
 					</Button>
-					<Button onClick={handleSubmit} disabled={!editor || editor.isEmpty}>
-						Submit to the Court
+					<Button onClick={handleSubmit} disabled={!editor || editorEmpty || submitting}>
+						{submitting ? 'Submitting...' : 'Submit to the Court'}
 					</Button>
 				</div>
 			</div>
@@ -194,7 +222,7 @@ export default function Workspace({ case_, initialDraft }: Props)
 									<ResearchPanel caseId={case_.id} caseName={case_.name} />
 								</TabsContent>
 								<TabsContent value="ai" className="mt-4">
-									<AiPanel case_={case_} editor={editor} />
+									<AiPanel case_={case_} editor={editor} side={side} />
 								</TabsContent>
 							</Tabs>
 						</CardContent>

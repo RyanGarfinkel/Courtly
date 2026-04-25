@@ -26,6 +26,25 @@ The system is **not a chatbot**. It is a structured, multi-agent pipeline that:
 
 ---
 
+## Development Principle: Always Use Agents
+
+When implementing any feature that involves AI reasoning, analysis, classification, summarization, or decision-making — **implement it as a stateless agent function in `backend/app/agents/`**, not as inline logic in controllers or services. Controllers handle HTTP only. Services orchestrate. Agents do the thinking.
+
+If a task could be done by an LLM, it should be done by an agent.
+
+## Development Principle: Parallelize Agent Work
+
+When using AI coding agents (Claude Code subagents, etc.) to implement features, **always run independent workstreams in parallel**. Never sequence tasks that don't have hard dependencies on each other.
+
+Typical parallel splits:
+- Backend implementation and frontend scaffolding can run simultaneously once the API contract is defined
+- Judge/persona prompt writing is always independent and should run in its own agent
+- Model definitions, controller logic, and orchestrator logic can often be parallelized across separate agents
+
+Write the API contract (request/response shapes) before spawning agents — that shared contract is the only dependency. Once it exists, backend and frontend agents can proceed simultaneously.
+
+---
+
 ## Core Principles
 
 - Every claim must be **grounded in evidence**

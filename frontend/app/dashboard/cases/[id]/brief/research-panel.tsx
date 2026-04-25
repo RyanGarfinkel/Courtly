@@ -104,7 +104,7 @@ export default function ResearchPanel({ caseId, caseName }: Props)
 				<Button variant="ghost" size="sm" onClick={loadResearch}>Refresh</Button>
 			</div>
 
-			<Accordion type="single" collapsible className="flex flex-col gap-2">
+			<Accordion className="flex flex-col gap-2">
 				{sources.map((s, i) => (
 					<AccordionItem key={i} value={`source-${i}`} className="border border-border rounded-lg px-3">
 						<AccordionTrigger className="hover:no-underline py-3">
