@@ -6,22 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
-
-interface DiscoveredCase
-{
-	id: string;
-	name: string;
-	year: number;
-	category: string;
-	summary: string;
-	citation: string;
-	source: "courtlistener";
-}
 
 interface Case
 {
@@ -60,10 +47,6 @@ export default function CasesGrid({ cases: initialCases, page, totalCount, total
 	const router = useRouter();
 	const pathname = usePathname();
 	const searchParams = useSearchParams();
-	const [search, setSearch] = useState(query);
-	const [discoveredCases, setDiscoveredCases] = useState<DiscoveredCase[]>([]);
-	const [discovering, setDiscovering] = useState(false);
-	const [creatingId, setCreatingId] = useState<string | null>(null);
 
 	const buildHref = useCallback((nextQuery: string, nextPage: number) =>
 	{
@@ -75,7 +58,7 @@ export default function CasesGrid({ cases: initialCases, page, totalCount, total
 		if(nextPage > 1) params.set("page", String(nextPage));
 		else params.delete("page");
 
-		return `${pathname}${params.toString() ? `?${searchParams.toString()}` : ""}`;
+		return `${pathname}${params.toString() ? `?${params.toString()}` : ""}`;
 	}, [pathname, searchParams]);
 
 	// Advanced filters state
@@ -104,8 +87,10 @@ export default function CasesGrid({ cases: initialCases, page, totalCount, total
 
 	// Reset displayed cases when initialCases change (e.g. on new search)
 	useEffect(() => {
-		setDisplayedCases(initialCases);
-		setHasMoreResults(initialCases.length === 5);
+		Promise.resolve().then(() => {
+			setDisplayedCases(initialCases);
+			setHasMoreResults(initialCases.length === 5);
+		});
 	}, [initialCases]);
 
 	useEffect(() =>
@@ -123,53 +108,6 @@ export default function CasesGrid({ cases: initialCases, page, totalCount, total
 
 		return () => window.clearTimeout(timeout);
 	}, [buildHref, pathname, router, searchQuery, searchParams]);
-
-	useEffect(() =>
-	{
-		const trimmed = search.trim();
-		if(trimmed.length < 2)
-		{
-			setDiscoveredCases([]);
-			return;
-		}
-
-		setDiscovering(true);
-		const timeout = window.setTimeout(async () =>
-		{
-			try
-			{
-				const res = await fetch(`${API_URL}/cases/discover?q=${encodeURIComponent(trimmed)}`);
-				if(res.ok) setDiscoveredCases(await res.json());
-			}
-			catch { /* ignore */ }
-			finally { setDiscovering(false); }
-		}, 500);
-
-		return () => window.clearTimeout(timeout);
-	}, [search]);
-
-	async function handleDiscoveredClick(dc: DiscoveredCase)
-	{
-		setCreatingId(dc.id);
-		try
-		{
-			const res = await fetch(`${API_URL}/cases`, {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({
-					name: dc.name,
-					summary: dc.summary,
-					citation: dc.citation,
-					year: dc.year,
-					category: dc.category,
-				}),
-			});
-			if(!res.ok) throw new Error();
-			const newCase = await res.json();
-			router.push(`/dashboard/cases/${newCase.id}`);
-		}
-		catch { setCreatingId(null); }
-	}
 
 	const startIndex = totalCount === 0 ? 0 : (page - 1) * pageSize + 1;
 	const endIndex = totalCount === 0 ? 0 : Math.min(page * pageSize, totalCount);
@@ -279,7 +217,7 @@ export default function CasesGrid({ cases: initialCases, page, totalCount, total
 				if(!res.ok) throw new Error();
 				const data = await res.json();
 				if (data.cases) setPopularCases(data.cases);
-			} catch (err) {
+			} catch {
 				setPopularCases([]);
 			}
 		};
@@ -491,47 +429,6 @@ export default function CasesGrid({ cases: initialCases, page, totalCount, total
 						>
 							Next
 						</Link>
-					</div>
-				</div>
-			)}
-
-			{(discoveredCases.length > 0 || discovering) && (
-				<div className="flex flex-col gap-4 pt-4 border-t border-border">
-					<div className="flex items-center gap-2">
-						<p className="text-sm font-medium">From CourtListener</p>
-						{discovering && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />}
-					</div>
-					<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-						{discoveredCases.map(dc => (
-							<button
-								key={dc.id}
-								type="button"
-								disabled={creatingId === dc.id}
-								onClick={() => handleDiscoveredClick(dc)}
-								className="text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-xl disabled:opacity-60"
-							>
-								<Card className="h-full flex flex-col hover:bg-muted transition-colors cursor-pointer">
-									<CardHeader className="pb-2">
-										<div className="flex items-center justify-between mb-1">
-											<Badge variant="outline">{dc.category}</Badge>
-											<span className="text-xs text-muted-foreground">{dc.year || ""}</span>
-										</div>
-										<CardTitle className="text-base leading-snug">
-											{creatingId === dc.id
-												? <span className="flex items-center gap-2"><Loader2 className="h-3 w-3 animate-spin" />Adding case...</span>
-												: dc.name
-											}
-										</CardTitle>
-									</CardHeader>
-									<CardContent className="flex-1">
-										<p className="text-sm text-muted-foreground line-clamp-3">{dc.summary}</p>
-									</CardContent>
-									<CardFooter>
-										<span className="text-xs text-muted-foreground">{dc.citation}</span>
-									</CardFooter>
-								</Card>
-							</button>
-						))}
 					</div>
 				</div>
 			)}

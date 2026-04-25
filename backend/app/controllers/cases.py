@@ -1,27 +1,28 @@
-from pydantic import BaseModelimport random
+import json
+import math
+import os
+import random
+import re
+from pathlib import Path
 
 from fastapi import APIRouter, Query
-from app.agents import case_discovery
-from pathlib import Path
-import math
-import json
-import re
+from pydantic import BaseModel
+from app.agents import case_search
 
-router = APIRouter()
+router = APIRouter(prefix="/cases", tags=["cases"])
 
 _PRESET_PATH = Path(__file__).parent.parent.parent / "config" / "cases.json"
 _CUSTOM_PATH = Path(__file__).parent.parent.parent / "data" / "cases.json"
-
+CASES_PATH = str(_PRESET_PATH)
 
 def _load_all() -> list:
-	preset = json.loads(_PRESET_PATH.read_text())
-	custom = json.loads(_CUSTOM_PATH.read_text()) if _CUSTOM_PATH.exists() else []
-	return preset + custom
-
+    preset = json.loads(_PRESET_PATH.read_text()) if _PRESET_PATH.exists() else []
+    custom = json.loads(_CUSTOM_PATH.read_text()) if _CUSTOM_PATH.exists() else []
+    return preset + custom
 
 def _save_custom(cases: list) -> None:
-	_CUSTOM_PATH.parent.mkdir(exist_ok=True)
-	_CUSTOM_PATH.write_text(json.dumps(cases, indent=2))
+    _CUSTOM_PATH.parent.mkdir(exist_ok=True, parents=True)
+    _CUSTOM_PATH.write_text(json.dumps(cases, indent=2))
 
 def _matches_case(case, query: str) -> bool:
     if not query:
@@ -35,35 +36,17 @@ def _matches_case(case, query: str) -> bool:
     ]).lower()
     return query.lower() in search_terms
 
-
-from app.agents import case_search
-
-@router.get("")
-def _matches(case: dict, query: str) -> bool:
-	if not query:
-		return True
-	q = query.lower()
-	return q in " ".join([
-		case.get("name", ""),
-		case.get("category", ""),
-		case.get("summary", ""),
-		case.get("citation", ""),
-	]).lower()
-
-
 def _slugify(name: str) -> str:
-	return re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-")
-
+    return re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-")
 
 class CaseCreate(BaseModel):
-	name: str
-	summary: str
-	category: str = "Custom"
-	year: int = 0
-	citation: str = ""
+    name: str
+    summary: str
+    category: str = "Custom"
+    year: int = 0
+    citation: str = ""
 
-
-@router.get("/cases")
+@router.get("")
 def get_cases(
     q: str | None = Query(default=None, description="Case search query"),
     page: int | None = Query(default=None, ge=1, description="Page number"),
@@ -103,11 +86,10 @@ def get_cases(
     # CRITICAL FALLBACK: If Gemini fails (e.g. 429 quota), use local data
     if not gemini_cases:
         try:
-            with open(CASES_PATH) as f:
-                all_local = json.load(f)
+            all_local = _load_all()
             
             def local_filter(c):
-                if c["id"] in exclude_ids:
+                if c.get("id") in exclude_ids:
                     return False
                 
                 # If search_query is provided, it must match
@@ -153,7 +135,6 @@ def get_cases(
         "total_pages": 1 if total_count > 0 else 0,
     }
 
-
 @router.get("/issues")
 def get_issues():
     # Standard SCOTUS categories
@@ -173,7 +154,6 @@ def get_issues():
     ]
     return {"issues": categories}
 
-
 @router.get("/popular")
 def get_popular(limit: int | None = Query(default=6, ge=1, le=24, description="Number of popular cases")):
     try:
@@ -185,14 +165,12 @@ def get_popular(limit: int | None = Query(default=6, ge=1, le=24, description="N
     except Exception as e:
         print(f"Error in get_popular (Gemini): {e}. Falling back to local data.")
         try:
-            with open(CASES_PATH) as f:
-                cases = json.load(f)
-            sample_size = min(len(cases), limit or 6)
-            picked = random.sample(cases, sample_size)
+            all_local = _load_all()
+            sample_size = min(len(all_local), limit or 6)
+            picked = random.sample(all_local, sample_size)
             return {"cases": picked}
         except:
             return {"cases": []}
-
 
 @router.get("/{case_id}")
 def get_case_by_id(case_id: str):
@@ -201,12 +179,37 @@ def get_case_by_id(case_id: str):
     # Fallback to local if Gemini fails to find by ID
     if not case:
         try:
-            with open(CASES_PATH) as f:
-                cases = json.load(f)
-            case = next((c for c in cases if c["id"] == case_id), None)
+            all_local = _load_all()
+            case = next((c for c in all_local if c.get("id") == case_id), None)
         except:
             pass
 
     if not case:
         return {"error": "Case not found"}, 404
     return case
+
+@router.post("")
+def create_case(req: CaseCreate):
+    cases = _load_all()
+    case_id = _slugify(req.name)
+    
+    # Simple check for existing
+    for c in cases:
+        if c.get("id") == case_id:
+            return c
+
+    new_case = {
+        "id": case_id,
+        "name": req.name,
+        "summary": req.summary,
+        "category": req.category,
+        "year": req.year,
+        "citation": req.citation
+    }
+    
+    # Save to custom data
+    custom = json.loads(_CUSTOM_PATH.read_text()) if _CUSTOM_PATH.exists() else []
+    custom.append(new_case)
+    _save_custom(custom)
+    
+    return new_case
