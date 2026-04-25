@@ -30,8 +30,8 @@ type Action = "draft" | "expand" | "strengthen" | "counter";
 const ACTIONS: { id: Action; label: string; description: string }[] = [
 	{
 		id: "draft",
-		label: "Draft for me",
-		description: "Generate a complete brief from the case details.",
+		label: "Get a Hint",
+		description: "Get insight into the key legal concepts at stake.",
 	},
 	{
 		id: "expand",
@@ -169,7 +169,7 @@ export default function AiPanel({ case_, editor, side }: Props)
 					</div>
 					<div
 						className="text-sm leading-relaxed prose prose-sm max-w-none"
-						dangerouslySetInnerHTML={{ __html: marked.parse(preview.result) as string }}
+						dangerouslySetInnerHTML={{ __html: marked.parse(preview.result) }}
 					/>
 					{preview.action !== "counter" && (
 						<Button size="sm" onClick={applyToEditor}>Apply to editor</Button>

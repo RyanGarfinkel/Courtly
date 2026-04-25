@@ -53,7 +53,7 @@ type Props = {
 
 export default async function BriefPage({ params, searchParams }: Props)
 {
-	const [{ id }, sp] = await Promise.all([params, searchParams ?? Promise.resolve({})]);
+	const [{ id }, sp] = await Promise.all([params, searchParams ?? Promise.resolve({} as { side?: string })]);
 	const side: Side = sp.side === "defendant" ? "defendant" : "plaintiff";
 	const [c, initialDraft] = await Promise.all([getCase(id), getExistingDraft(id)]);
 	if(!c) notFound();
