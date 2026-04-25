@@ -87,11 +87,17 @@ def process_turn(
 
 		current_judge = _judge_by_id(state.questioning_order[state.turn - 1])
 		last_question = next(
-			(m.content for m in reversed(state.messages) if m.speaker_id == current_judge.id),
+			(m.content for m in reversed(state.messages) if m.speaker_id == current_judge.id and m.type == 'question'),
 			''
 		)
-		delta = judge_agent.score_response(current_judge, last_question, user_response, state.brief)
-		state.disposition_scores[current_judge.id] = max(-5, min(5, state.disposition_scores[current_judge.id] + delta))
+		score = judge_agent.score_response(current_judge, last_question, user_response, state.brief)
+		state.disposition_scores[current_judge.id] = max(-5, min(5, state.disposition_scores[current_judge.id] + score))
+
+		# Add judge's reaction to the answer
+		reaction = judge_agent.react_to_response(current_judge, last_question, user_response, score)
+		reaction_msg = _make_message(current_judge.name, current_judge.id, reaction, 'statement')
+		state.messages.append(reaction_msg)
+		new_messages.append(reaction_msg)
 
 		if state.turn < state.total_turns:
 			state.turn += 1
@@ -213,6 +219,6 @@ def process_turn(
 		)
 
 		state.phase = 'concluded'
-		return state, [], ruling
+		return state, new_messages, ruling
 
 	return state, [], None

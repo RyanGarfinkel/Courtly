@@ -1,7 +1,7 @@
 'use client';
 
 import { Skeleton } from '@/components/ui/skeleton';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000';
@@ -16,24 +16,27 @@ interface Memo
 {
 	label: string;
 	body: string;
+	isAuto?: boolean;
 }
 
 interface Props
 {
 	hearingId: string;
+	pendingQuestion: { id: string; speaker: string; content: string } | null;
 }
 
-export default function AssistantPanel({ hearingId }: Props)
+export default function AssistantPanel({ hearingId, pendingQuestion }: Props)
 {
 	const [memos, setMemos] = useState<Memo[]>([]);
 	const [custom, setCustom] = useState('');
 	const [loading, setLoading] = useState(false);
 	const [activePreset, setActivePreset] = useState<string | null>(null);
+	const [lastAutoId, setLastAutoId] = useState<string | null>(null);
 
-	async function callAssist(question: string, label: string)
+	async function callAssist(question: string, label: string, isAuto = false)
 	{
 		setLoading(true);
-		setActivePreset(label);
+		if(!isAuto) setActivePreset(label);
 		try
 		{
 			const res = await fetch(`${API_URL}/hearing/assist`, {
@@ -42,7 +45,7 @@ export default function AssistantPanel({ hearingId }: Props)
 				body: JSON.stringify({ hearing_id: hearingId, question }),
 			});
 			const data = await res.json();
-			setMemos(prev => [{ label, body: data.answer }, ...prev]);
+			setMemos(prev => [{ label, body: data.answer, isAuto }, ...prev]);
 		}
 		finally
 		{
@@ -50,6 +53,15 @@ export default function AssistantPanel({ hearingId }: Props)
 			setActivePreset(null);
 		}
 	}
+
+	useEffect(() =>
+	{
+		if(pendingQuestion && pendingQuestion.id !== lastAutoId)
+		{
+			setLastAutoId(pendingQuestion.id);
+			callAssist(`Summarize what ${pendingQuestion.speaker} just asked in simple, plain English. Keep it to 2-3 sentences max.`, `${pendingQuestion.speaker}'s Question`, true);
+		}
+	}, [pendingQuestion, lastAutoId]);
 
 	function handleCustomSubmit()
 	{
@@ -117,10 +129,15 @@ export default function AssistantPanel({ hearingId }: Props)
 				)}
 
 				{memos.map((memo, i) => (
-					<div key={i} className="flex flex-col gap-3 p-4 rounded-lg border border-border bg-muted/10">
+					<div key={i} className={cn(
+						"flex flex-col gap-3 p-4 rounded-lg border transition-colors",
+						memo.isAuto ? "border-foreground/20 bg-foreground/[0.02]" : "border-border bg-muted/10"
+					)}>
 						<div className="flex items-center gap-2">
 							<div className="h-px flex-1 bg-foreground/15" />
-							<span className="text-[9px] font-medium text-muted-foreground uppercase tracking-widest">Clerk's Memo</span>
+							<span className="text-[9px] font-medium text-muted-foreground uppercase tracking-widest">
+								{memo.isAuto ? "Auto-Memo" : "Clerk's Memo"}
+							</span>
 							<div className="h-px flex-1 bg-foreground/15" />
 						</div>
 						{memo.label !== 'What just happened?' && (

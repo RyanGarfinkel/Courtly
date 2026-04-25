@@ -19,20 +19,13 @@ interface StressTestResult
 	suggestions: string[];
 }
 
-interface ArgumentMapData
-{
-	claims: { id: string; text: string; strength: number }[];
-	counters: { id: string; text: string; attacks: string[]; severity: 'high' | 'medium' | 'low' }[];
-}
-
 interface Props
 {
 	hearingId: string;
-	pendingQuestion: { speaker: string; content: string } | null;
+	pendingQuestion: { id: string; speaker: string; content: string } | null;
 	phase: string;
 	onSubmit: (response: string) => void;
 	loading: boolean;
-	onMapGenerated: (data: ArgumentMapData) => void;
 }
 
 const SCORE_LABELS: Record<string, string> = {
@@ -49,12 +42,13 @@ function scoreColor(score: number)
 	return 'bg-muted-foreground/40';
 }
 
-export default function ResponseStudio({ hearingId, pendingQuestion, phase, onSubmit, loading, onMapGenerated }: Props)
+export default function ResponseStudio({ hearingId, pendingQuestion, phase, onSubmit, loading }: Props)
 {
 	const [draft, setDraft] = useState('');
 	const [analysis, setAnalysis] = useState<StressTestResult | null>(null);
+	const [hints, setHints] = useState<string[] | null>(null);
 	const [analyzing, setAnalyzing] = useState(false);
-	const [mapping, setMapping] = useState(false);
+	const [gettingHint, setGettingHint] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 
 	async function handleStressTest()
@@ -87,32 +81,33 @@ export default function ResponseStudio({ hearingId, pendingQuestion, phase, onSu
 		}
 	}
 
-	async function handleMap()
+	async function handleGetHint()
 	{
-		if(!draft.trim() || mapping) return;
-		setMapping(true);
+		if(gettingHint) return;
+		setGettingHint(true);
+		setHints(null);
 		setError(null);
 		try
 		{
-			const res = await fetch(`${API_URL}/hearing/argument-map`, {
+			const res = await fetch(`${API_URL}/hearing/hint`, {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
 					hearing_id: hearingId,
-					draft: draft.trim(),
 					question: pendingQuestion?.content ?? '',
 				}),
 			});
 			if(!res.ok)
 			{
-				setError('Session expired. Please re-submit your brief.');
+				setError('Could not get hint. Please try again.');
 				return;
 			}
-			onMapGenerated(await res.json());
+			const data = await res.json();
+			setHints(data.hints);
 		}
 		finally
 		{
-			setMapping(false);
+			setGettingHint(false);
 		}
 	}
 
@@ -122,6 +117,7 @@ export default function ResponseStudio({ hearingId, pendingQuestion, phase, onSu
 		onSubmit(draft.trim());
 		setDraft('');
 		setAnalysis(null);
+		setHints(null);
 	}, [draft, loading, onSubmit]);
 
 	useEffect(() =>
@@ -169,15 +165,15 @@ export default function ResponseStudio({ hearingId, pendingQuestion, phase, onSu
 						{analyzing ? 'Analyzing...' : 'Stress Test →'}
 					</button>
 					<button
-						onClick={handleMap}
-						disabled={!draft.trim() || mapping || loading}
+						onClick={handleGetHint}
+						disabled={gettingHint || loading || !pendingQuestion}
 						className={cn(
 							'flex-1 px-3 py-2 rounded-md border text-xs font-medium transition-colors',
 							'border-border text-muted-foreground hover:text-foreground hover:border-foreground/40',
 							'disabled:opacity-40 disabled:cursor-not-allowed',
 						)}
 					>
-						{mapping ? 'Mapping...' : 'Map Arguments'}
+						{gettingHint ? 'Thinking...' : 'Get Hint'}
 					</button>
 				</div>
 				<Button
@@ -192,6 +188,20 @@ export default function ResponseStudio({ hearingId, pendingQuestion, phase, onSu
 					{error && <span className="text-[11px] text-destructive">{error}</span>}
 				</div>
 			</div>
+
+			{hints && (
+				<div className="flex flex-col gap-2 pt-2">
+					<p className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest">Suggested Angles</p>
+					<div className="flex flex-col gap-1.5">
+						{hints.map((hint, i) => (
+							<div key={i} className="flex gap-2 text-xs text-foreground leading-relaxed pl-3 border-l-2 border-primary/40">
+								<span>•</span>
+								<p>{hint}</p>
+							</div>
+						))}
+					</div>
+				</div>
+			)}
 
 			{analysis && (
 				<div className="flex flex-col gap-5 pt-2">
