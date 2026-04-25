@@ -9,6 +9,10 @@ applyTo: "backend/**"
 - Pydantic v2 for all data models
 - `python-dotenv` for environment variables
 
+## Syntax
+- Prefer single quotes for Python string literals.
+- Use double quotes only where the syntax requires it or when escaping would reduce readability.
+
 ## Folder Structure
 
 ```

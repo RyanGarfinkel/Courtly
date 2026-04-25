@@ -1,26 +1,359 @@
 [
   {
+    "id": "marbury-v-madison",
+    "name": "Marbury v. Madison",
+    "year": 1803,
+    "category": "Judicial Review",
+    "summary": "When President Adams appointed William Marbury as a justice of the peace but the commission was never delivered, Marbury petitioned the Supreme Court directly for a writ of mandamus. Chief Justice Marshall held that while Marbury was entitled to his commission, the Court lacked jurisdiction because the relevant provision of the Judiciary Act of 1789 was unconstitutional. This decision established the foundational doctrine of judicial review — the power of federal courts to strike down laws that conflict with the Constitution."
+  },
+  {
+    "id": "fletcher-v-peck",
+    "name": "Fletcher v. Peck",
+    "year": 1810,
+    "category": "Contract Clause",
+    "summary": "Following a massive land fraud scheme in Georgia, the state legislature attempted to repeal the land grants, voiding subsequent sales to innocent third parties. The Court ruled that the repeal violated the Contract Clause of the Constitution. This was the first time the Supreme Court struck down a state law on constitutional grounds, establishing strict protections for property rights and legal contracts against state interference."
+  },
+  {
+    "id": "mcculloch-v-maryland",
+    "name": "McCulloch v. Maryland",
+    "year": 1819,
+    "category": "Federal Power",
+    "summary": "Maryland imposed a tax on the federally chartered Bank of the United States, and the bank's cashier, McCulloch, refused to pay. The Court unanimously held that Congress had the implied power to charter a national bank under the Necessary and Proper Clause, and that states could not tax federal instrumentalities without violating the Supremacy Clause. The ruling cemented broad federal authority and the principle that the Constitution must be interpreted expansively to meet the needs of a growing nation."
+  },
+  {
+    "id": "gibbons-v-ogden",
+    "name": "Gibbons v. Ogden",
+    "year": 1824,
+    "category": "Commerce Clause",
+    "summary": "New York granted a monopoly to Robert Fulton and Robert Livingston to operate steamboats on state waters, which clashed with a federal coastal license held by Thomas Gibbons. The Court ruled unanimously that the Commerce Clause of the Constitution grants the federal government the power to regulate interstate commerce, including navigation, and that federal law supersedes conflicting state laws under the Supremacy Clause."
+  },
+  {
+    "id": "dred-scott-v-sandford",
+    "name": "Dred Scott v. Sandford",
+    "year": 1857,
+    "category": "Civil Rights",
+    "summary": "Dred Scott, an enslaved Black man, sued for his freedom after living in a free state and a free territory. The Court held 7-2 that Black individuals, whether enslaved or free, could not be American citizens and therefore lacked standing to sue in federal court. It also ruled the Missouri Compromise unconstitutional, accelerating the nation's descent into the Civil War. It is universally condemned as the worst decision in Supreme Court history and was effectively overturned by the Thirteenth and Fourteenth Amendments."
+  },
+  {
+    "id": "slaughter-house-cases",
+    "name": "Slaughter-House Cases",
+    "year": 1873,
+    "category": "Fourteenth Amendment",
+    "summary": "Louisiana granted a monopoly to one slaughterhouse company in New Orleans, prompting rival butchers to sue under the recently ratified Fourteenth Amendment. In a 5-4 decision, the Court narrowly interpreted the Privileges or Immunities Clause, ruling that it only protected rights guaranteed by the federal government, not those granted by individual states. This decision severely limited the initial scope and power of the Fourteenth Amendment to protect civil rights."
+  },
+  {
+    "id": "plessy-v-ferguson",
+    "name": "Plessy v. Ferguson",
+    "year": 1896,
+    "category": "Equal Protection",
+    "summary": "Homer Plessy, who was seven-eighths white, was arrested for sitting in a whites-only railroad car in Louisiana and challenged the state's Separate Car Act on Equal Protection grounds. The Court upheld the law, establishing the notorious 'separate but equal' doctrine that would justify racial segregation across American public life for over half a century. Justice Harlan's lone dissent, declaring the Constitution 'color-blind,' would later be vindicated by Brown v. Board of Education."
+  },
+  {
+    "id": "lochner-v-new-york",
+    "name": "Lochner v. New York",
+    "year": 1905,
+    "category": "Due Process",
+    "summary": "A New York law limited bakers' working hours to 10 hours a day and 60 hours a week to protect worker health. The Court struck down the law 5-4, holding that it violated the 'liberty of contract' implicit in the Due Process Clause of the Fourteenth Amendment. This inaugurated the 'Lochner era,' during which the Court routinely struck down progressive labor and economic regulations until the late 1930s."
+  },
+  {
+    "id": "schenck-v-united-states",
+    "name": "Schenck v. United States",
+    "year": 1919,
+    "category": "First Amendment",
+    "summary": "Charles Schenck was convicted under the Espionage Act for distributing leaflets urging men to resist the military draft during World War I. The Court unanimously upheld his conviction, with Justice Oliver Wendell Holmes Jr. establishing the 'clear and present danger' test, famously noting that the First Amendment does not protect someone falsely shouting fire in a crowded theater. The standard for restricting speech was later significantly tightened in Brandenburg v. Ohio (1969)."
+  },
+  {
+    "id": "gitlow-v-new-york",
+    "name": "Gitlow v. New York",
+    "year": 1925,
+    "category": "First Amendment",
+    "summary": "Benjamin Gitlow, a socialist, was convicted under a state criminal anarchy law for publishing a left-wing manifesto. While the Court upheld his conviction, the monumental importance of the ruling lay in its holding that the First Amendment's protections of free speech and free press apply to state governments through the Due Process Clause of the Fourteenth Amendment. This was the birth of the 'incorporation doctrine,' which eventually applied most of the Bill of Rights to the states."
+  },
+  {
+    "id": "nlrb-v-jones-laughlin",
+    "name": "NLRB v. Jones & Laughlin Steel Corp.",
+    "year": 1937,
+    "category": "Commerce Clause",
+    "summary": "The National Labor Relations Board charged a major steel company with discriminating against employees who wanted to unionize. In a landmark 5-4 shift ending the 'Lochner era,' the Court upheld the National Labor Relations Act, ruling that Congress's power to regulate interstate commerce includes the power to regulate intrastate activities that 'have such a close and substantial relation to interstate commerce.' This paved the way for the modern administrative state and New Deal economic regulations."
+  },
+  {
+    "id": "wickard-v-filburn",
+    "name": "Wickard v. Filburn",
+    "year": 1942,
+    "category": "Commerce Clause",
+    "summary": "An Ohio farmer, Roscoe Filburn, grew more wheat than permitted under the Agricultural Adjustment Act, but argued the excess was for his own animals and family, not for interstate sale. The Court ruled unanimously against him, holding that even if an activity is local and not regarded as commerce, it may still be regulated by Congress if, in the aggregate, it exerts a substantial economic effect on interstate commerce. This represents one of the broadest interpretations of federal power in American history."
+  },
+  {
+    "id": "korematsu-v-united-states",
+    "name": "Korematsu v. United States",
+    "year": 1944,
+    "category": "Civil Liberties",
+    "summary": "Fred Korematsu, a Japanese American citizen, refused to comply with a military order requiring all persons of Japanese ancestry on the West Coast to report to internment camps following the attack on Pearl Harbor. The Court upheld the exclusion order in a 6-3 decision, applying what it called the highest scrutiny while still deferring to military necessity. Widely regarded as one of the Court's most shameful decisions, it was formally repudiated in Trump v. Hawaii (2018), and Korematsu's conviction was vacated in 1983."
+  },
+  {
+    "id": "youngstown-sheet-v-sawyer",
+    "name": "Youngstown Sheet & Tube Co. v. Sawyer",
+    "year": 1952,
+    "category": "Executive Power",
+    "summary": "During the Korean War, President Truman issued an executive order to seize and operate the nation's steel mills to prevent a strike that would disrupt munitions production. The Court ruled 6-3 that the President lacked the constitutional or statutory authority to seize private property. Justice Jackson's concurring opinion established a highly influential three-tiered framework for evaluating presidential power based on whether Congress has authorized, prohibited, or remained silent on the action."
+  },
+  {
     "id": "brown-v-board-of-education",
     "name": "Brown v. Board of Education",
     "year": 1954,
     "category": "Equal Protection",
-    "summary": "Racial segregation in public schools violates the Equal Protection Clause of the Fourteenth Amendment.",
-    "citation": "347 U.S. 483"
+    "summary": "African American families in five states challenged racially segregated public schools, arguing that 'separate but equal' facilities were inherently unequal in violation of the Fourteenth Amendment. The Court unanimously overruled Plessy v. Ferguson, finding that segregated schools generated a feeling of inferiority in Black children that undermined their educational opportunities. This watershed ruling ignited the modern civil rights movement and fundamentally reshaped American law and society."
+  },
+  {
+    "id": "mapp-v-ohio",
+    "name": "Mapp v. Ohio",
+    "year": 1961,
+    "category": "Fourth Amendment",
+    "summary": "Police forcibly entered Dollree Mapp's home without a valid warrant looking for a bombing suspect and instead found obscene materials, for which she was convicted. The Court ruled 6-3 that evidence obtained through unreasonable searches and seizures in violation of the Fourth Amendment is inadmissible in state courts. This decision formally applied the 'exclusionary rule' to the states via the Fourteenth Amendment."
+  },
+  {
+    "id": "baker-v-carr",
+    "name": "Baker v. Carr",
+    "year": 1962,
+    "category": "Equal Protection",
+    "summary": "Voters in Tennessee sued because the state had not redrawn its legislative districts in over 60 years, heavily favoring rural areas over booming urban ones. Overruling previous precedent that deemed redistricting a non-justiciable 'political question,' the Court held 6-2 that federal courts have jurisdiction to hear constitutional challenges to legislative malapportionment. This paved the way for the 'one person, one vote' standard established shortly after."
+  },
+  {
+    "id": "engel-v-vitale",
+    "name": "Engel v. Vitale",
+    "year": 1962,
+    "category": "First Amendment",
+    "summary": "A New York school district directed students to recite a brief nondenominational prayer composed by the state Board of Regents at the start of each school day. The Court held 6-1 that government-sponsored prayer in public schools violates the Establishment Clause, even when participation is voluntary and the prayer is nonsectarian. The decision remains one of the most controversial in the Court's history and is a cornerstone of the modern separation of church and state."
+  },
+  {
+    "id": "gideon-v-wainwright",
+    "name": "Gideon v. Wainwright",
+    "year": 1963,
+    "category": "Sixth Amendment",
+    "summary": "Clarence Gideon was charged with breaking and entering in Florida, but the trial court denied his request for appointed counsel because state law only provided lawyers in capital cases. The Court unanimously overruled Betts v. Brady and held that the Sixth Amendment right to counsel is a fundamental right incorporated against the states through the Fourteenth Amendment. The ruling transformed criminal justice by guaranteeing every indigent defendant facing serious criminal charges the right to an attorney."
+  },
+  {
+    "id": "heart-of-atlanta-motel-v-us",
+    "name": "Heart of Atlanta Motel v. United States",
+    "year": 1964,
+    "category": "Commerce Clause",
+    "summary": "A motel owner in Atlanta, Georgia, refused to rent rooms to Black Americans, openly violating Title II of the Civil Rights Act of 1964. He argued Congress exceeded its Commerce Clause powers by regulating a local business. The Court ruled unanimously against him, holding that racial discrimination by hotels significantly impedes interstate travel and commerce, thus validating the constitutionality of the landmark Civil Rights Act."
+  },
+  {
+    "id": "new-york-times-v-sullivan",
+    "name": "New York Times Co. v. Sullivan",
+    "year": 1964,
+    "category": "First Amendment",
+    "summary": "An Alabama official sued the New York Times over a full-page civil rights advertisement that contained minor factual errors, winning a $500,000 libel judgment under state law. The Court reversed unanimously, holding that the First Amendment sharply limits defamation suits by public officials, who must prove 'actual malice' — knowledge of falsity or reckless disregard for the truth. This decision created a powerful constitutional shield for press freedom and robust political debate."
+  },
+  {
+    "id": "griswold-v-connecticut",
+    "name": "Griswold v. Connecticut",
+    "year": 1965,
+    "category": "Privacy",
+    "summary": "Connecticut law criminalized the use of contraceptives and the counseling of married couples about birth control, and Planned Parenthood's executive director was convicted under it. The Court struck down the law 7-2, recognizing a constitutional right to marital privacy emanating from the 'penumbras' of several Bill of Rights guarantees. Griswold became the foundational precedent for a broader constitutional right to privacy, later extended in Roe v. Wade and Lawrence v. Texas."
   },
   {
     "id": "miranda-v-arizona",
     "name": "Miranda v. Arizona",
     "year": 1966,
     "category": "Fifth Amendment",
-    "summary": "Suspects must be informed of their rights to remain silent and to an attorney before police questioning.",
-    "citation": "384 U.S. 436"
+    "summary": "Ernesto Miranda confessed to kidnapping and rape after two hours of police interrogation without being told he had the right to remain silent or the right to an attorney. The Court held 5-4 that statements made during custodial interrogation are inadmissible unless police first inform suspects of their constitutional rights in clear and unequivocal terms. The 'Miranda warning' is now one of the most recognizable phrases in American law, recited in every police arrest and depicted in countless films and television shows."
+  },
+  {
+    "id": "loving-v-virginia",
+    "name": "Loving v. Virginia",
+    "year": 1967,
+    "category": "Equal Protection",
+    "summary": "Richard and Mildred Loving, a white man and a Black woman, were convicted under Virginia's Racial Integrity Act for marrying across racial lines and sentenced to a year in prison, suspended on the condition that they leave the state. The Court unanimously struck down Virginia's anti-miscegenation statute, holding that restricting the freedom to marry on the basis of race violates both the Equal Protection and Due Process Clauses. Loving is now invoked as foundational precedent for marriage equality and other fundamental rights cases."
+  },
+  {
+    "id": "katz-v-united-states",
+    "name": "Katz v. United States",
+    "year": 1967,
+    "category": "Fourth Amendment",
+    "summary": "Federal agents attached an eavesdropping device to the outside of a public telephone booth used by Charles Katz to transmit illegal gambling wagers. The Court ruled 7-1 that the wiretap was an unconstitutional search, famously stating that the Fourth Amendment 'protects people, not places.' The decision established the modern 'reasonable expectation of privacy' test, requiring a warrant for surveillance where a person expects privacy that society recognizes as reasonable."
+  },
+  {
+    "id": "terry-v-ohio",
+    "name": "Terry v. Ohio",
+    "year": 1968,
+    "category": "Fourth Amendment",
+    "summary": "An undercover police officer observed three men acting suspiciously around a jewelry store, stopped them, patted them down, and found concealed weapons. The Court held 8-1 that the Fourth Amendment is not violated when a police officer stops a suspect on the street and frisks them without probable cause to arrest, provided the officer has a 'reasonable suspicion' that the person has committed or is about to commit a crime and may be armed. This established the 'Terry stop' or 'stop and frisk' doctrine."
   },
   {
     "id": "tinker-v-des-moines",
     "name": "Tinker v. Des Moines Independent Community School District",
     "year": 1969,
     "category": "First Amendment",
-    "summary": "Students do not shed their constitutional right to free speech at the schoolhouse gate.",
-    "citation": "393 U.S. 503"
+    "summary": "Iowa students were suspended for wearing black armbands to school to protest the Vietnam War, and their parents challenged the policy as a violation of First Amendment rights. The Court held 7-2 that students do not 'shed their constitutional rights to freedom of speech or expression at the schoolhouse gate,' and that school officials cannot suppress expression unless it substantially disrupts school operations. Tinker remains the leading case on student speech rights and is regularly litigated as new forms of student expression emerge."
+  },
+  {
+    "id": "new-york-times-v-us",
+    "name": "New York Times Co. v. United States",
+    "year": 1971,
+    "category": "First Amendment",
+    "summary": "The Nixon Administration attempted to prevent the New York Times and Washington Post from publishing the 'Pentagon Papers,' a classified study of US involvement in Vietnam, arguing national security. In a 6-3 per curiam decision, the Court ruled against the government, holding that prior restraint on the press carries a 'heavy presumption against its constitutional validity,' and the government had not met the heavy burden required to censor the press."
+  },
+  {
+    "id": "lemon-v-kurtzman",
+    "name": "Lemon v. Kurtzman",
+    "year": 1971,
+    "category": "First Amendment",
+    "summary": "Pennsylvania and Rhode Island statutes provided state funding to non-public, primarily Catholic, schools for secular subjects. The Court struck down the programs 8-0 and 8-1, establishing the 'Lemon Test' for analyzing Establishment Clause challenges. To be constitutional, a government action must have a secular legislative purpose, its principal effect must neither advance nor inhibit religion, and it must not foster 'excessive government entanglement with religion.'"
+  },
+  {
+    "id": "roe-v-wade",
+    "name": "Roe v. Wade",
+    "year": 1973,
+    "category": "Due Process",
+    "summary": "Jane Roe challenged a Texas law that criminalized abortion except to save the mother's life, arguing that the statute violated her constitutional right to privacy. The Court held 7-2 that the right to privacy under the Due Process Clause of the Fourteenth Amendment encompasses a woman's decision to terminate a pregnancy, subject to a trimester framework balancing fetal development against the state's interest. Roe was overruled in 2022 by Dobbs v. Jackson Women's Health Organization, which returned the question of abortion regulation to individual states."
+  },
+  {
+    "id": "us-v-nixon",
+    "name": "United States v. Nixon",
+    "year": 1974,
+    "category": "Executive Power",
+    "summary": "A special prosecutor subpoenaed White House tape recordings relevant to the Watergate cover-up, and President Nixon claimed executive privilege to withhold them. The Court ruled unanimously that while the Constitution recognizes executive privilege, it is not absolute and must yield to the demonstrated need for evidence in a criminal proceeding. Nixon's compliance with the ruling led directly to his resignation, cementing the principle that no one — including the President — is above the law."
+  },
+  {
+    "id": "regents-v-bakke",
+    "name": "Regents of the University of California v. Bakke",
+    "year": 1978,
+    "category": "Equal Protection",
+    "summary": "Allan Bakke, a white applicant, sued UC Davis Medical School after being rejected twice while the school reserved 16 of 100 seats in each class for minority applicants under a special admissions program. Justice Powell's controlling opinion held that rigid racial quotas were unconstitutional but that race could be considered as one factor among many in admissions to achieve the compelling interest of educational diversity. Bakke launched decades of affirmative action litigation and the diversity rationale remained central to higher education admissions until Students for Fair Admissions v. Harvard in 2023."
+  },
+  {
+    "id": "chevron-v-nrdc",
+    "name": "Chevron U.S.A., Inc. v. Natural Resources Defense Council, Inc.",
+    "year": 1984,
+    "category": "Administrative Law",
+    "summary": "In interpreting the Clean Air Act, the EPA adopted a regulation allowing states to treat all pollution-emitting devices within the same industrial grouping as though they were encased in a single 'bubble.' The Court upheld the regulation, creating the 'Chevron deference' doctrine. It dictated that if a statute is ambiguous, federal courts must defer to the enforcing agency's reasonable interpretation of the law. This doctrine became the cornerstone of modern administrative law until it was overturned in 2024 by Loper Bright Enterprises v. Raimondo."
+  },
+  {
+    "id": "batson-v-kentucky",
+    "name": "Batson v. Kentucky",
+    "year": 1986,
+    "category": "Equal Protection",
+    "summary": "During the criminal trial of James Batson, a Black man, the prosecutor used peremptory challenges to strike all four Black potential jurors, resulting in an all-white jury. The Court ruled 7-2 that a prosecutor's use of a peremptory challenge to exclude jurors based solely on their race violates the Equal Protection Clause of the Fourteenth Amendment. This created the 'Batson challenge,' requiring lawyers to provide a race-neutral reason for a jury strike if discrimination is alleged."
+  },
+  {
+    "id": "texas-v-johnson",
+    "name": "Texas v. Johnson",
+    "year": 1989,
+    "category": "First Amendment",
+    "summary": "Gregory Lee Johnson burned an American flag outside the 1984 Republican National Convention in Dallas to protest the Reagan administration, and was convicted under a Texas law criminalizing flag desecration. The Court held 5-4 that burning the flag is a form of expressive conduct protected by the First Amendment. The ruling emphasized that the government cannot prohibit the expression of an idea simply because society finds the idea itself offensive or disagreeable."
+  },
+  {
+    "id": "planned-parenthood-v-casey",
+    "name": "Planned Parenthood v. Casey",
+    "year": 1992,
+    "category": "Due Process",
+    "summary": "Pennsylvania amended its abortion control law to include a 24-hour waiting period, spousal notification, and parental consent for minors. In a fractured 5-4 decision, the Court reaffirmed the 'essential holding' of Roe v. Wade but replaced its rigid trimester framework with the 'undue burden' standard. An abortion regulation is unconstitutional if it places a substantial obstacle in the path of a woman seeking an abortion before fetal viability. Casey was eventually overruled by Dobbs in 2022."
+  },
+  {
+    "id": "bush-v-gore",
+    "name": "Bush v. Gore",
+    "year": 2000,
+    "category": "Equal Protection",
+    "summary": "Following the extremely close 2000 presidential election, the Florida Supreme Court ordered a manual recount of disputed ballots. The US Supreme Court halted the recount and ruled 5-4 that the differing standards used by Florida counties to recount votes violated the Equal Protection Clause. Because no constitutionally valid recount could be completed by the safe harbor deadline, the decision effectively awarded Florida's electoral votes, and the presidency, to George W. Bush."
+  },
+  {
+    "id": "lawrence-v-texas",
+    "name": "Lawrence v. Texas",
+    "year": 2003,
+    "category": "Due Process",
+    "summary": "Houston police responding to a reported weapons disturbance entered John Lawrence's apartment and found him engaging in a consensual sexual act with another man. Both were arrested under a Texas law banning same-sex intimacy. The Court ruled 6-3 to strike down the law, explicitly overruling Bowers v. Hardwick (1986). The majority held that intimate, consensual sexual conduct is part of the liberty protected by the substantive due process under the Fourteenth Amendment."
+  },
+  {
+    "id": "kelo-v-new-london",
+    "name": "Kelo v. New London",
+    "year": 2005,
+    "category": "Fifth Amendment",
+    "summary": "The city of New London, Connecticut, used its eminent domain authority to seize private, non-blighted property and sell it to private developers as part of a comprehensive economic revitalization plan. The Court held 5-4 that taking private property for general economic development satisfies the 'public use' requirement of the Fifth Amendment's Takings Clause. The controversial decision sparked immediate nationwide backlash and led dozens of states to pass laws restricting eminent domain."
+  },
+  {
+    "id": "dc-v-heller",
+    "name": "District of Columbia v. Heller",
+    "year": 2008,
+    "category": "Second Amendment",
+    "summary": "Washington D.C.'s Firearms Control Regulations Act banned handguns entirely and required other firearms to be kept disassembled or trigger-locked in the home, prompting Dick Heller to challenge the law. The Court held 5-4 that the Second Amendment protects an individual right to possess firearms for traditionally lawful purposes such as self-defense within the home, independent of service in a militia. Heller is the first decision to squarely hold that the Second Amendment confers an individual right and has generated extensive litigation over the scope of permissible gun regulations."
+  },
+  {
+    "id": "citizens-united-v-fec",
+    "name": "Citizens United v. Federal Election Commission",
+    "year": 2010,
+    "category": "First Amendment",
+    "summary": "Citizens United, a conservative nonprofit, sought to broadcast a critical documentary about Hillary Clinton and run ads for it during the 2008 primary season, in apparent violation of campaign finance laws restricting corporate political expenditures. The Court held 5-4 that political spending by corporations, associations, and labor unions is a protected form of free speech under the First Amendment, overruling Austin v. Michigan Chamber of Commerce. The decision transformed American campaign finance law and led to the rise of super PACs and the flow of unlimited 'dark money' into elections."
+  },
+  {
+    "id": "mcdonald-v-chicago",
+    "name": "McDonald v. City of Chicago",
+    "year": 2010,
+    "category": "Second Amendment",
+    "summary": "Following the Heller decision, which applied only to federal enclaves like Washington D.C., Otis McDonald challenged a similar handgun ban in the city of Chicago. The Court ruled 5-4 that the Second Amendment right to keep and bear arms for self-defense is fully applicable to the states via the Fourteenth Amendment's Due Process Clause. This formally incorporated the Second Amendment against state and local governments."
+  },
+  {
+    "id": "nfib-v-sebelius",
+    "name": "National Federation of Independent Business v. Sebelius",
+    "year": 2012,
+    "category": "Federal Power",
+    "summary": "Multiple states challenged the constitutionality of the Affordable Care Act (Obamacare), specifically its individual mandate requiring most Americans to maintain health insurance. In a complex 5-4 decision, Chief Justice Roberts upheld the mandate not under the Commerce Clause, but as a valid exercise of Congress's taxing power. However, the Court also ruled that the federal government could not coercively threaten to withhold existing Medicaid funding from states that chose not to expand their programs."
+  },
+  {
+    "id": "shelby-county-v-holder",
+    "name": "Shelby County v. Holder",
+    "year": 2013,
+    "category": "Voting Rights",
+    "summary": "A county in Alabama challenged the constitutionality of two provisions of the Voting Rights Act of 1965: Section 5, which required certain jurisdictions to obtain federal 'preclearance' before changing voting laws, and Section 4(b), which contained the coverage formula determining which jurisdictions were subject to preclearance. The Court held 5-4 that the coverage formula was unconstitutional because it was based on decades-old data that no longer reflected current realities, effectively gutting the preclearance requirement and immediately sparking a wave of new state voting restrictions."
+  },
+  {
+    "id": "riley-v-california",
+    "name": "Riley v. California",
+    "year": 2014,
+    "category": "Fourth Amendment",
+    "summary": "David Riley was stopped for a traffic violation, which led to his arrest and the warrantless search of his smartphone. Data found on the phone was later used to convict him of a gang-related shooting. In a unanimous decision, the Court held that the police generally may not, without a warrant, search digital information on a cell phone seized from an individual who has been arrested. The ruling recognized that modern cell phones hold vast amounts of deeply personal information fundamentally different from physical objects found in a pocket."
+  },
+  {
+    "id": "obergefell-v-hodges",
+    "name": "Obergefell v. Hodges",
+    "year": 2015,
+    "category": "Due Process",
+    "summary": "Jim Obergefell married his terminally ill partner in Maryland, but Ohio refused to list his name as the surviving spouse on the death certificate because it did not recognize their same-sex marriage. The Court held 5-4 that the fundamental right to marry is guaranteed to same-sex couples by both the Due Process and Equal Protection Clauses of the Fourteenth Amendment, requiring all states to license and recognize such marriages. The ruling built on Loving v. Virginia and Griswold v. Connecticut, extending their logic of dignity and personal autonomy to LGBT couples."
+  },
+  {
+    "id": "bostock-v-clayton-county",
+    "name": "Bostock v. Clayton County",
+    "year": 2020,
+    "category": "Civil Rights",
+    "summary": "Gerald Bostock was fired from his job as a child welfare coordinator after expressing interest in a gay softball league. Consolidating three similar cases, the Court held 6-3 that Title VII of the Civil Rights Act of 1964, which prohibits employment discrimination 'because of... sex,' inherently protects employees against discrimination on the basis of sexual orientation or gender identity. The landmark textualist opinion authored by Justice Gorsuch concluded that one cannot discriminate against a person for being homosexual or transgender without also discriminating against that individual based on sex."
+  },
+  {
+    "id": "dobbs-v-jackson",
+    "name": "Dobbs v. Jackson Women's Health Organization",
+    "year": 2022,
+    "category": "Due Process",
+    "summary": "Mississippi's Gestational Age Act banned most abortions after 15 weeks, directly challenging the viability framework established in Roe v. Wade and reaffirmed in Planned Parenthood v. Casey. The Court held 6-3 that the Constitution does not confer a right to abortion because such a right is neither deeply rooted in history and tradition nor implicit in the concept of ordered liberty, overruling both Roe and Casey. The decision returned the authority to regulate abortion to individual states, immediately triggering a wave of state legislation ranging from near-total bans to affirmative protections."
+  },
+  {
+    "id": "sffa-v-harvard",
+    "name": "Students for Fair Admissions v. Harvard",
+    "year": 2023,
+    "category": "Equal Protection",
+    "summary": "The conservative legal organization Students for Fair Admissions sued Harvard College and the University of North Carolina, arguing their race-conscious admissions practices discriminated against Asian American applicants. The Court held 6-3 that the universities' affirmative action programs violated the Equal Protection Clause of the Fourteenth Amendment. Overturning decades of precedent starting with Bakke, the majority ruled that universities can no longer use race as a distinct factor in admissions, though applicants may still discuss how race affected their lives through personal essays."
+  },
+  {
+    "id": "loper-bright-v-raimondo",
+    "name": "Loper Bright Enterprises v. Raimondo",
+    "year": 2024,
+    "category": "Administrative Law",
+    "summary": "Commercial fishing companies challenged a federal rule requiring them to pay the salaries of government observers carried on their boats, arguing the statute did not explicitly authorize the fee. The Court ruled 6-3 to explicitly overrule Chevron v. NRDC (1984), holding that the Administrative Procedure Act requires courts to exercise their independent judgment when interpreting ambiguous statutes, rather than deferring to a federal agency's interpretation. This radically reduced the power of federal regulatory agencies and expanded the interpretive power of the federal judiciary."
+  },
+  {
+    "id": "trump-v-united-states",
+    "name": "Trump v. United States",
+    "year": 2024,
+    "category": "Presidential Immunity",
+    "summary": "Former President Trump sought to dismiss federal criminal charges related to efforts to overturn the 2020 election results, arguing that his conduct was protected by absolute presidential immunity from criminal prosecution. The Court held 6-3 that former presidents have absolute immunity for their core constitutional powers and presumptive immunity for all official acts, but no immunity for unofficial or private conduct. The decision significantly curtailed the scope of the pending federal indictment against Trump and opened major questions about the limits of executive accountability under the criminal law."
   }
 ]
