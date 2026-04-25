@@ -1,0 +1,26 @@
+[
+  {
+    "id": "brown-v-board-of-education",
+    "name": "Brown v. Board of Education",
+    "year": 1954,
+    "category": "Equal Protection",
+    "summary": "Racial segregation in public schools violates the Equal Protection Clause of the Fourteenth Amendment.",
+    "citation": "347 U.S. 483"
+  },
+  {
+    "id": "miranda-v-arizona",
+    "name": "Miranda v. Arizona",
+    "year": 1966,
+    "category": "Fifth Amendment",
+    "summary": "Suspects must be informed of their rights to remain silent and to an attorney before police questioning.",
+    "citation": "384 U.S. 436"
+  },
+  {
+    "id": "tinker-v-des-moines",
+    "name": "Tinker v. Des Moines Independent Community School District",
+    "year": 1969,
+    "category": "First Amendment",
+    "summary": "Students do not shed their constitutional right to free speech at the schoolhouse gate.",
+    "citation": "393 U.S. 503"
+  }
+]

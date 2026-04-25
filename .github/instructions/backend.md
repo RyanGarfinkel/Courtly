@@ -54,6 +54,10 @@ backend/
 - `.env.example` lives at `backend/.env.example` — always kept up to date with required keys (empty values)
 - Load with `python-dotenv` via `load_dotenv()` in `main.py`
 
+## Imports
+- Ordered by statement length: **longest first, shortest last**
+- No grouping by type — stdlib, third-party, and local imports sorted together by length
+
 ## Naming Conventions
 - Files and directories: `snake_case`
 - Classes: `PascalCase`

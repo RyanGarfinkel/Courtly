@@ -1,14 +1,14 @@
-import os
-
+from app.controllers.retriever import router as retriever_router
+from app.controllers.cases import router as cases_router
 from dotenv import load_dotenv
-from courtlistener import CourtListener
 from fastapi import FastAPI
 
 load_dotenv()
 
-test = CourtListener(api_token=os.getenv("COURTLISTENER_API_KEY"))
-
 app = FastAPI(title="Courtly API")
+
+app.include_router(cases_router)
+app.include_router(retriever_router)
 
 
 @app.get("/health")
