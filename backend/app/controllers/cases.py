@@ -1,13 +1,11 @@
+from app.clients.courtlistener import CourtListenerClient
+from concurrent.futures import ThreadPoolExecutor
+from app.clients.gemini import GeminiClient
+from fastapi import APIRouter, Query
+from app.clients.mongo import get_db
+from pydantic import BaseModel
 import hashlib
 import re
-from concurrent.futures import ThreadPoolExecutor
-
-from fastapi import APIRouter, Query
-from pydantic import BaseModel
-
-from app.clients.courtlistener import CourtListenerClient
-from app.clients.gemini import GeminiClient
-from app.clients.mongo import get_db
 
 EXPAND_WORKERS = 3
 
