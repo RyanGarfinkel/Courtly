@@ -3,9 +3,9 @@ from google import genai
 import time
 import os
 
-MODEL = "gemini-3-flash-preview"
-MAX_RETRIES = 3
 
+MAX_RETRIES = 3
+MODEL = "gemini-3.1-flash-lite-preview"
 
 class GeminiClient:
     def __init__(self):
