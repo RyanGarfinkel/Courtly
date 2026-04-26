@@ -1,7 +1,7 @@
 'use client';
 
 import { Skeleton } from '@/components/ui/skeleton';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { cn } from '@/lib/utils';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000';
@@ -31,7 +31,7 @@ export default function AssistantPanel({ hearingId, pendingQuestion }: Props)
 	const [custom, setCustom] = useState('');
 	const [loading, setLoading] = useState(false);
 	const [activePreset, setActivePreset] = useState<string | null>(null);
-	const [lastAutoId, setLastAutoId] = useState<string | null>(null);
+	const processedQuestions = useRef(new Set<string>());
 
 	async function callAssist(question: string, label: string, isAuto = false)
 	{
@@ -56,12 +56,16 @@ export default function AssistantPanel({ hearingId, pendingQuestion }: Props)
 
 	useEffect(() =>
 	{
-		if(pendingQuestion && pendingQuestion.id !== lastAutoId)
+		if (pendingQuestion && !processedQuestions.current.has(pendingQuestion.id))
 		{
-			setLastAutoId(pendingQuestion.id);
-			callAssist(`Summarize what ${pendingQuestion.speaker} just asked in simple, plain English. Keep it to 2-3 sentences max.`, `${pendingQuestion.speaker}'s Question`, true);
+			processedQuestions.current.add(pendingQuestion.id);
+			callAssist(
+				`Summarize what ${pendingQuestion.speaker} just asked in simple, plain English. Keep it to 2-3 sentences max.`,
+				`${pendingQuestion.speaker}'s Question`,
+				true
+			);
 		}
-	}, [pendingQuestion, lastAutoId]);
+	}, [pendingQuestion]);
 
 	function handleCustomSubmit()
 	{
