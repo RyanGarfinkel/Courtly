@@ -1,24 +1,13 @@
 {
-  "version": 2,
-  "builds": [
-    {
-      "src": "frontend/package.json",
-      "use": "@vercel/next"
+  "experimentalServices": {
+    "frontend": {
+      "entrypoint": "frontend",
+      "routePrefix": "/",
+      "framework": "nextjs"
     },
-    {
-      "src": "backend/main.py",
-      "use": "@vercel/python"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/(cases|hearing|brief|research|retriever|external-cases|health)(/?.*)",
-      "dest": "backend/main.py"
-    }
-  ],
-  "functions": {
-    "backend/main.py": {
-      "maxDuration": 60
+    "backend": {
+      "entrypoint": "backend",
+      "routePrefix": "/_/backend"
     }
   }
 }
