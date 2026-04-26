@@ -2,21 +2,22 @@ from app.clients.gemini import GeminiClient
 
 _gemini = GeminiClient()
 
-def draft(case_name: str, case_summary: str, category: str, year: int, citation: str, user_notes: str = "") -> str:
+def draft(case_name: str, case_summary: str, category: str, year: int, citation: str, side: str = "plaintiff", user_notes: str = "") -> str:
 	notes_section = f"\n\nAttorney's notes / position:\n{user_notes}" if user_notes.strip() else ""
+	role = "petitioner (plaintiff)" if side == "plaintiff" else "respondent (defendant)"
 
-	prompt = f"""You are a skilled appellate attorney drafting an oral argument brief for the Supreme Court.
+	prompt = f"""You are a skilled appellate attorney preparing oral argument hints for the Supreme Court.
 
 Case: {case_name} ({citation}, {year})
 Category: {category}
 Background: {case_summary}{notes_section}
 
-Review the facts and issues at stake in the case. Provide hints about the better legal arguments for the opponent's side, structured as:
-1. Key weaknesses in the presented case
-2. Stronger arguments the opponent could make
-3. Relevant precedents or constitutional principles supporting the opponent
+The attorney is arguing as the {role}. Provide hints about the strongest legal arguments available to the {role}, structured as:
+1. Core legal theory and how it applies to this case
+2. Key precedents or constitutional principles that support the {role}'s position
+3. How to frame the argument persuasively to the Court
 
-Write in short, concise bullet point form (between 5-10 bullet points, each one sentence). Do not include any header and get straight to the bullet points. Be objective and analytical."""
+Write in short, concise bullet point form (between 5-10 bullet points, each one sentence). Do not include any header and get straight to the bullet points. Be specific to the {role}'s position."""
 
 	return _gemini.generate(prompt)
 

@@ -1,215 +1,198 @@
-import json
-import math
-import os
-import random
+import hashlib
 import re
-from pathlib import Path
 
 from fastapi import APIRouter, Query
 from pydantic import BaseModel
-from app.agents import case_search
+
+from app.clients.courtlistener import CourtListenerClient
+from app.clients.gemini import GeminiClient
+from app.clients.mongo import get_db
 
 router = APIRouter(prefix="/cases", tags=["cases"])
 
-_PRESET_PATH = Path(__file__).parent.parent.parent / "config" / "cases.json"
-_CUSTOM_PATH = Path(__file__).parent.parent.parent / "data" / "cases.json"
-CASES_PATH = str(_PRESET_PATH)
 
-def _load_all() -> list:
-    preset = json.loads(_PRESET_PATH.read_text()) if _PRESET_PATH.exists() else []
-    custom = json.loads(_CUSTOM_PATH.read_text()) if _CUSTOM_PATH.exists() else []
-    return preset + custom
+def _case_id(name: str) -> str:
+	return hashlib.sha1(name.lower().strip().encode()).hexdigest()[:10]
 
-def _save_custom(cases: list) -> None:
-    _CUSTOM_PATH.parent.mkdir(exist_ok=True, parents=True)
-    _CUSTOM_PATH.write_text(json.dumps(cases, indent=2))
 
-def _matches_case(case, query: str) -> bool:
-    if not query:
-        return True
+def _expand_summary(name: str, snippet: str) -> str:
+	prompt = f"""Summarize the US Supreme Court case "{name}" in 3-4 paragraphs.
+Cover: the facts and background, the central legal question, the Court's holding, and the broader significance.
+Write in clear informative prose. No headers or bullet points.
+Context from the opinion: {snippet}"""
+	try:
+		return GeminiClient().generate(prompt)
+	except Exception:
+		return snippet
 
-    search_terms = " ".join([
-        str(case.get("name", "")),
-        str(case.get("category", "")),
-        str(case.get("summary", "")),
-        str(case.get("citation", "")),
-    ]).lower()
-    return query.lower() in search_terms
 
-def _slugify(name: str) -> str:
-    return re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-")
+def _map_cl(result: dict, override_id: str | None = None, cl: CourtListenerClient | None = None) -> dict | None:
+	name = result.get("caseName", "").strip()
+	if not name:
+		return None
+	year = None
+	if result.get("dateFiled"):
+		try:
+			year = int(result["dateFiled"][:4])
+		except ValueError:
+			pass
+	citations = result.get("citation", [])
+	snippet = re.sub(r"<[^>]+>", "", result.get("snippet", "")).strip()
+	raw_url = result.get("absolute_url", "")
+
+	judge_str = result.get("judge", "") or ""
+	if not judge_str and raw_url and cl:
+		panel = cl.get_cluster_judges(raw_url)
+	else:
+		names = [n.strip() for n in judge_str.split(",") if n.strip()]
+		panel = names or None
+
+	return {
+		"id": override_id or _case_id(name),
+		"name": name,
+		"year": year,
+		"category": result.get("suitNature") or "Supreme Court",
+		"summary": _expand_summary(name, snippet),
+		"citation": citations[0] if citations else "",
+		"court_listener_link": f"https://www.courtlistener.com{raw_url}" if raw_url else None,
+		"panel": panel,
+	}
+
+
+def _cl_search(query: str, limit: int = 5) -> list[dict]:
+	cl = CourtListenerClient()
+	try:
+		results = cl.search_opinions(query, limit=limit)
+		cases = [c for r in results if (c := _map_cl(r, cl=cl))]
+		col = get_db()["cases"]
+		for c in cases:
+			col.replace_one({"id": c["id"]}, c, upsert=True)
+		return cases
+	finally:
+		cl.close()
+
+
+def _seed_if_empty() -> None:
+	if get_db()["cases"].count_documents({}) == 0:
+		from app.seed import run
+		run()
+
 
 class CaseCreate(BaseModel):
-    name: str
-    summary: str
-    category: str = "Custom"
-    year: int = 0
-    citation: str = ""
+	name: str
+	summary: str
+	category: str = "Custom"
+	year: int = 0
+	citation: str = ""
 
-@router.get("")
-def get_cases(
-    q: str | None = Query(default=None, description="Case search query"),
-    page: int | None = Query(default=None, ge=1, description="Page number"),
-    limit: int | None = Query(default=None, ge=1, le=48, description="Cases per page"),
-    category: str | None = Query(default=None, description="Filter by category"),
-    name: str | None = Query(default=None, description="Exact case name match"),
-    year_from: int | None = Query(default=None, description="Minimum case year"),
-    year_to: int | None = Query(default=None, description="Maximum case year"),
-    keyword: str | None = Query(default=None, description="Keyword search"),
-    exclude: str | None = Query(default=None, description="Comma-separated list of case IDs to exclude")
-):
-    # If no search/filter params provided, return empty
-    if not any([q, name, category, year_from, year_to, keyword]):
-        return {
-            "cases": [],
-            "query": "",
-            "page": page or 1,
-            "page_size": limit or 5,
-            "total_count": 0,
-            "total_pages": 0,
-        }
-
-    search_query = q or name or ""
-    exclude_ids = exclude.split(",") if exclude else []
-    
-    # Use Gemini to search
-    gemini_cases = case_search.search_cases(
-        query=search_query,
-        limit=limit or 5,
-        category=category,
-        year_from=year_from,
-        year_to=year_to,
-        exclude_ids=exclude_ids,
-        keywords=keyword
-    )
-
-    # CRITICAL FALLBACK: If Gemini fails (e.g. 429 quota), use local data
-    if not gemini_cases:
-        try:
-            all_local = _load_all()
-            
-            def local_filter(c):
-                if c.get("id") in exclude_ids:
-                    return False
-                
-                # If search_query is provided, it must match
-                if search_query and not _matches_case(c, search_query):
-                    return False
-                
-                # If keyword is provided, at least one keyword must match
-                if keyword:
-                    kws = [k.strip().lower() for k in keyword.split(",") if k.strip()]
-                    if kws:
-                        case_str = " ".join([str(v) for v in c.values()]).lower()
-                        if not any(kw in case_str for kw in kws):
-                            return False
-                
-                # Category filter
-                if category and category.lower() not in str(c.get("category", "")).lower():
-                    return False
-                
-                # Year filters
-                if year_from and int(c.get("year", 0)) < int(year_from):
-                    return False
-                if year_to and int(c.get("year", 0)) > int(year_to):
-                    return False
-                
-                return True
-            
-            gemini_cases = [c for c in all_local if local_filter(c)]
-            # Manual limit for local fallback
-            gemini_cases = gemini_cases[:(limit or 5)]
-        except Exception as e:
-            print(f"Fallback search failed: {e}")
-
-    page_size = limit or 5
-    page_number = page or 1
-    total_count = len(gemini_cases)
-    
-    return {
-        "cases": gemini_cases,
-        "query": search_query,
-        "page": page_number,
-        "page_size": page_size,
-        "total_count": total_count,
-        "total_pages": 1 if total_count > 0 else 0,
-    }
 
 @router.get("/issues")
 def get_issues():
-    # Standard SCOTUS categories
-    categories = [
-        "First Amendment",
-        "Second Amendment",
-        "Due Process",
-        "Equal Protection",
-        "Commerce Clause",
-        "Search and Seizure",
-        "Criminal Procedure",
-        "Civil Rights",
-        "Executive Power",
-        "Federalism",
-        "Privacy",
-        "Voting Rights"
-    ]
-    return {"issues": categories}
+	return {"issues": [
+		"First Amendment", "Second Amendment", "Due Process", "Equal Protection",
+		"Commerce Clause", "Search and Seizure", "Criminal Procedure", "Civil Rights",
+		"Executive Power", "Federalism", "Privacy", "Voting Rights",
+	]}
+
 
 @router.get("/popular")
-def get_popular(limit: int | None = Query(default=6, ge=1, le=24, description="Number of popular cases")):
-    try:
-        # Use Gemini to get landmark cases
-        landmark_cases = case_search.get_popular_cases(limit=limit or 6)
-        if not landmark_cases:
-            raise ValueError("No cases from Gemini")
-        return {"cases": landmark_cases}
-    except Exception as e:
-        print(f"Error in get_popular (Gemini): {e}. Falling back to local data.")
-        try:
-            all_local = _load_all()
-            sample_size = min(len(all_local), limit or 6)
-            picked = random.sample(all_local, sample_size)
-            return {"cases": picked}
-        except:
-            return {"cases": []}
+def get_popular(limit: int = Query(default=6, ge=1, le=24)):
+	_seed_if_empty()
+	col = get_db()["cases"]
+	docs = list(col.aggregate([{"$sample": {"size": limit}}, {"$project": {"_id": 0}}]))
+	return {"cases": docs}
+
+
+@router.get("")
+def get_cases(
+	q: str | None = Query(default=None),
+	page: int | None = Query(default=None, ge=1),
+	limit: int | None = Query(default=None, ge=1, le=48),
+	category: str | None = Query(default=None),
+	name: str | None = Query(default=None),
+	year_from: int | None = Query(default=None),
+	year_to: int | None = Query(default=None),
+	keyword: str | None = Query(default=None),
+	exclude: str | None = Query(default=None),
+):
+	if not any([q, name, category, year_from, year_to, keyword]):
+		return {"cases": [], "query": "", "page": 1, "page_size": limit or 5, "total_count": 0, "total_pages": 0}
+
+	search_query = q or name or keyword or ""
+	exclude_ids = set(exclude.split(",")) if exclude else set()
+	n = limit or 5
+
+	col = get_db()["cases"]
+	mongo_results = list(col.find(
+		{"name": {"$regex": search_query, "$options": "i"}},
+		{"_id": 0},
+		limit=n + len(exclude_ids),
+	))
+	mongo_results = [c for c in mongo_results if c["id"] not in exclude_ids]
+
+	if len(mongo_results) >= n:
+		return {
+			"cases": mongo_results[:n],
+			"query": search_query,
+			"page": page or 1,
+			"page_size": n,
+			"total_count": len(mongo_results),
+			"total_pages": 1,
+		}
+
+	try:
+		cases = _cl_search(search_query, limit=n + len(exclude_ids))
+		cases = [c for c in cases if c["id"] not in exclude_ids][:n]
+	except Exception as e:
+		print(f"CourtListener search failed: {e}")
+		cases = mongo_results
+
+	return {
+		"cases": cases,
+		"query": search_query,
+		"page": page or 1,
+		"page_size": n,
+		"total_count": len(cases),
+		"total_pages": 1 if cases else 0,
+	}
+
 
 @router.get("/{case_id}")
 def get_case_by_id(case_id: str):
-    case = case_search.get_case_details(case_id)
-    
-    # Fallback to local if Gemini fails to find by ID
-    if not case:
-        try:
-            all_local = _load_all()
-            case = next((c for c in all_local if c.get("id") == case_id), None)
-        except:
-            pass
+	cached = get_db()["cases"].find_one({"id": case_id}, {"_id": 0})
+	if cached:
+		return cached
 
-    if not case:
-        return {"error": "Case not found"}, 404
-    return case
+	try:
+		cl = CourtListenerClient()
+		try:
+			results = cl.search_opinions(case_id.replace("-", " "), limit=1)
+		finally:
+			cl.close()
+		if results:
+			case = _map_cl(results[0], override_id=case_id, cl=cl)
+			if case:
+				get_db()["cases"].replace_one({"id": case_id}, case, upsert=True)
+				return case
+	except Exception as e:
+		print(f"CourtListener lookup failed: {e}")
+
+	return {"error": "Case not found"}, 404
+
 
 @router.post("")
 def create_case(req: CaseCreate):
-    cases = _load_all()
-    case_id = _slugify(req.name)
-    
-    # Simple check for existing
-    for c in cases:
-        if c.get("id") == case_id:
-            return c
-
-    new_case = {
-        "id": case_id,
-        "name": req.name,
-        "summary": req.summary,
-        "category": req.category,
-        "year": req.year,
-        "citation": req.citation
-    }
-    
-    # Save to custom data
-    custom = json.loads(_CUSTOM_PATH.read_text()) if _CUSTOM_PATH.exists() else []
-    custom.append(new_case)
-    _save_custom(custom)
-    
-    return new_case
+	case_id = _case_id(req.name)
+	existing = get_db()["cases"].find_one({"id": case_id}, {"_id": 0})
+	if existing:
+		return existing
+	new_case = {
+		"id": case_id,
+		"name": req.name,
+		"summary": req.summary,
+		"category": req.category,
+		"year": req.year,
+		"citation": req.citation,
+	}
+	get_db()["cases"].insert_one({**new_case})
+	return new_case

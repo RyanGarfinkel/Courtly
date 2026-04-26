@@ -19,13 +19,13 @@ applyTo: "backend/**"
 backend/
   app/
     agents/        # individual agent implementations (retriever, plaintiff, defense, etc.)
-    clients/       # external API integrations (CourtListener, Gemini)
+    clients/       # external API integrations (CourtListener, Gemini, MongoDB)
     controllers/   # FastAPI routers — HTTP only, no business logic
     dependencies/  # FastAPI dependencies (e.g. auth)
     models/        # Pydantic models
     orchestrators/ # agent pipeline orchestration
     services/      # business logic
-  config/          # static configuration files (e.g. judges.json)
+    seed.py        # one-time DB seed — judges + preset cases with CourtListener links
   main.py          # app entry point — mounts routers, nothing else
   .env             # secrets (gitignored)
   .env.example     # checked-in template with empty values
@@ -44,6 +44,7 @@ backend/
 
 - **CourtListener** — case law retrieval via the `courtlistener-api-client` SDK. Client lives at `app/clients/courtlistener.py`. API key loaded from `COURTLISTENER_API_KEY` env var. Use `CourtListener(api_token=...)` as the entry point; endpoints support `.get(id)` and `.list(**filters)` with automatic pagination.
 - **Gemini / Gemma** — LLM calls via `google-genai` SDK. Client lives at `app/clients/gemini.py`. API key loaded from `GEMINI_API_KEY` env var. Use Gemini for cloud inference, Gemma for open-weight model runs.
+- **MongoDB** — primary persistence layer. Client lives at `app/clients/mongo.py`; `get_db()` returns the `courtly` database. Connection URI loaded from `MONGODB_URI` env var. Collections: `cases` (global case catalog), `judges` (judicial panel config), `hearings` (per-user hearing state).
 
 ## Authentication
 - Auth0 JWT verification via `python-jose`

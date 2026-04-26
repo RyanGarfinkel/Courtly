@@ -12,23 +12,13 @@ import AiPanel from "./ai-panel";
 import { marked } from "marked";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useCase } from "@/contexts/case";
 import { cn } from "@/lib/utils";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
-interface Case
-{
-	id: string;
-	name: string;
-	year: number;
-	category: string;
-	summary: string;
-	citation: string;
-}
-
 interface Props
 {
-	case_: Case;
 	initialDraft: string | null;
 	side: "plaintiff" | "defendant";
 }
@@ -62,8 +52,9 @@ function ToolbarButton({ onClick, active, children }: ToolbarButtonProps)
 	);
 }
 
-export default function Workspace({ case_, initialDraft, side }: Props)
+export default function Workspace({ initialDraft, side }: Props)
 {
+	const c = useCase();
 	const [panelOpen, setPanelOpen] = useState(true);
 	const [saving, setSaving] = useState(false);
 	const [submitting, setSubmitting] = useState(false);
@@ -101,7 +92,7 @@ export default function Workspace({ case_, initialDraft, side }: Props)
 			await fetch(`${API_URL}/brief/save-draft`, {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ case_id: case_.id, content: editor.getText() }),
+				body: JSON.stringify({ case_id: c.id, content: editor.getText() }),
 			});
 			setSavedAt(new Date().toLocaleTimeString());
 		}
@@ -121,16 +112,16 @@ export default function Workspace({ case_, initialDraft, side }: Props)
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
-					case_id: case_.id,
-					case_name: case_.name,
-					case_summary: case_.summary,
+					case_id: c.id,
+					case_name: c.name,
+					case_summary: c.summary,
 					brief: editor.getText(),
 					side,
 				}),
 			});
 			const data = await res.json();
 			sessionStorage.setItem(`hearing_${data.hearing_id}`, JSON.stringify(data));
-			router.push(`/dashboard/cases/${case_.id}/hearing?hearing_id=${data.hearing_id}&side=${side}`);
+			router.push(`/cases/${c.id}/hearing?hearing_id=${data.hearing_id}&side=${side}`);
 		}
 		finally
 		{
@@ -219,10 +210,10 @@ export default function Workspace({ case_, initialDraft, side }: Props)
 									<TabsTrigger value="ai" className="flex-1">AI Assistant</TabsTrigger>
 								</TabsList>
 								<TabsContent value="research" className="mt-4">
-									<ResearchPanel caseId={case_.id} caseName={case_.name} />
+									<ResearchPanel caseId={c.id} caseName={c.name} />
 								</TabsContent>
 								<TabsContent value="ai" className="mt-4">
-									<AiPanel case_={case_} editor={editor} side={side} />
+									<AiPanel editor={editor} side={side} />
 								</TabsContent>
 							</Tabs>
 						</CardContent>

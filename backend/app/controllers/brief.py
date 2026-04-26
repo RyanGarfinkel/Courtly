@@ -12,6 +12,7 @@ class DraftRequest(BaseModel):
 	category: str = ""
 	year: int = 0
 	citation: str = ""
+	side: str = "plaintiff"
 	user_notes: str = ""
 
 
@@ -28,7 +29,7 @@ class SaveDraftRequest(BaseModel):
 
 @router.post("/brief/draft")
 def draft_brief(req: DraftRequest):
-	return {"result": draft(req.case_name, req.case_summary, req.category, req.year, req.citation, req.user_notes)}
+	return {"result": draft(req.case_name, req.case_summary, req.category, req.year, req.citation, req.side, req.user_notes)}
 
 
 @router.post("/brief/expand")

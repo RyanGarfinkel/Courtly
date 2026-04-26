@@ -1,16 +1,8 @@
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
-import HearingRoom from './hearing-room';
 import { notFound } from 'next/navigation';
-
-interface Case
-{
-	id: string;
-	name: string;
-	year: number;
-	category: string;
-	summary: string;
-	citation: string;
-}
+import { CaseProvider } from '@/contexts/case';
+import HearingRoom from './hearing-room';
+import { Case } from '@/types/case';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000';
 
@@ -51,7 +43,7 @@ export default async function HearingPage({ params, searchParams }: Props)
 						</BreadcrumbItem>
 						<BreadcrumbSeparator />
 						<BreadcrumbItem>
-							<BreadcrumbLink href={`/dashboard/cases/${c.id}`}>{c.name}</BreadcrumbLink>
+							<BreadcrumbLink href={`/cases/${c.id}`}>{c.name}</BreadcrumbLink>
 						</BreadcrumbItem>
 						<BreadcrumbSeparator />
 						<BreadcrumbItem>
@@ -60,11 +52,12 @@ export default async function HearingPage({ params, searchParams }: Props)
 					</BreadcrumbList>
 				</Breadcrumb>
 
-				<HearingRoom
-					case_={c}
-					hearingId={hearing_id}
-					side={(side as 'plaintiff' | 'defendant') ?? 'plaintiff'}
-				/>
+				<CaseProvider case_={c}>
+					<HearingRoom
+						hearingId={hearing_id}
+						side={(side as 'plaintiff' | 'defendant') ?? 'plaintiff'}
+					/>
+				</CaseProvider>
 			</div>
 		</main>
 	);

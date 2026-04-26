@@ -1,4 +1,5 @@
 import os
+import re
 
 from courtlistener import CourtListener
 from courtlistener.resource import ResourceIterator
@@ -35,6 +36,19 @@ class CourtListenerClient:
             if len(results) >= limit:
                 break
         return results
+
+    def get_cluster_judges(self, absolute_url: str) -> list[str] | None:
+        match = re.search(r"/opinion/(\d+)/", absolute_url)
+        if not match:
+            return None
+        cluster_id = match.group(1)
+        try:
+            cluster = self._client.clusters.get(cluster_id, fields=["judges"])
+            judges_str = cluster.get("judges", "") or ""
+            names = [n.strip() for n in judges_str.split(",") if n.strip()]
+            return names or None
+        except Exception:
+            return None
 
     def lookup_citations(self, text: str) -> list[dict]:
         return self._client.citation_lookup.lookup_text(text)

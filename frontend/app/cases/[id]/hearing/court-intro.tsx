@@ -1,25 +1,18 @@
 'use client';
 
+import { useCase } from '@/contexts/case';
 import { JUDGES } from './judges';
 import { Button } from '@/components/ui/button';
 
-interface Case
-{
-	id: string;
-	name: string;
-	year: number;
-	citation: string;
-}
-
 interface Props
 {
-	case_: Case;
 	side: 'plaintiff' | 'defendant';
 	onBegin: () => void;
 }
 
-export default function CourtIntro({ case_, side, onBegin }: Props)
+export default function CourtIntro({ side, onBegin }: Props)
 {
+	const case_ = useCase();
 	const BENCH_ROW_1 = JUDGES.slice(0, 5);
 	const BENCH_ROW_2 = JUDGES.slice(5);
 

@@ -3,22 +3,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
+import { useCase } from '@/contexts/case';
 import ActionPanel from './action-panel';
 import BenchHeader from './bench-header';
 import CourtIntro from './court-intro';
 import Bubble from './bubble';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000';
-
-interface Case
-{
-	id: string;
-	name: string;
-	year: number;
-	category: string;
-	summary: string;
-	citation: string;
-}
 
 interface HearingMessage
 {
@@ -52,7 +43,6 @@ interface HearingRuling
 
 interface Props
 {
-	case_: Case;
 	hearingId: string;
 	side: 'plaintiff' | 'defendant';
 }
@@ -65,8 +55,9 @@ const PHASE_LABELS: Record<string, string> = {
 
 const JUSTICE_IDS = new Set(['hale', 'okafor', 'voss', 'crane', 'mirande', 'ashworth', 'lim', 'ndidi', 'solis']);
 
-export default function HearingRoom({ case_, hearingId, side }: Props)
+export default function HearingRoom({ hearingId, side }: Props)
 {
+	const case_ = useCase();
 	const [messages, setMessages] = useState<HearingMessage[]>([]);
 	const [phase, setPhase] = useState('interrogation_user');
 	const [turn, setTurn] = useState(1);
@@ -166,7 +157,6 @@ export default function HearingRoom({ case_, hearingId, side }: Props)
 	{
 		return (
 			<CourtIntro
-				case_={case_}
 				side={side}
 				onBegin={() => setCourtCalled(true)}
 			/>

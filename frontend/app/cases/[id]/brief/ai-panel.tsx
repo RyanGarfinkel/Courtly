@@ -2,25 +2,15 @@
 
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { useCase } from "@/contexts/case";
 import type { Editor } from "@tiptap/react";
 import { marked } from "marked";
 import { useState } from "react";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
-interface Case
-{
-	id: string;
-	name: string;
-	year: number;
-	category: string;
-	summary: string;
-	citation: string;
-}
-
 interface Props
 {
-	case_: Case;
 	editor: Editor | null;
 	side: "plaintiff" | "defendant";
 }
@@ -50,8 +40,9 @@ const ACTIONS: { id: Action; label: string; description: string }[] = [
 	},
 ];
 
-export default function AiPanel({ case_, editor, side }: Props)
+export default function AiPanel({ editor, side }: Props)
 {
+	const case_ = useCase();
 	const [notes, setNotes] = useState("");
 	const [activeAction, setActiveAction] = useState<Action | null>(null);
 	const [preview, setPreview] = useState<{ action: Action; result: string } | null>(null);
@@ -77,6 +68,7 @@ export default function AiPanel({ case_, editor, side }: Props)
 				category: case_.category,
 				year: case_.year,
 				citation: case_.citation,
+				side,
 				user_notes: notes || currentText,
 			},
 			expand: {

@@ -1,17 +1,9 @@
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 import { notFound } from "next/navigation";
+import { CaseProvider } from "@/contexts/case";
 import { Badge } from "@/components/ui/badge";
+import { Case } from "@/types/case";
 import Workspace from "./workspace";
-
-interface Case
-{
-	id: string;
-	name: string;
-	year: number;
-	category: string;
-	summary: string;
-	citation: string;
-}
 
 const BACKEND = process.env.API_URL ?? "http://localhost:8000";
 
@@ -67,7 +59,7 @@ export default async function BriefPage({ params, searchParams }: Props)
 						</BreadcrumbItem>
 						<BreadcrumbSeparator />
 						<BreadcrumbItem>
-							<BreadcrumbLink href={`/dashboard/cases/${c.id}`}>{c.name}</BreadcrumbLink>
+							<BreadcrumbLink href={`/cases/${c.id}`}>{c.name}</BreadcrumbLink>
 						</BreadcrumbItem>
 						<BreadcrumbSeparator />
 						<BreadcrumbItem>
@@ -90,7 +82,9 @@ export default async function BriefPage({ params, searchParams }: Props)
 					</div>
 				</div>
 
-				<Workspace case_={c} initialDraft={initialDraft} side={side} />
+				<CaseProvider case_={c}>
+					<Workspace initialDraft={initialDraft} side={side} />
+				</CaseProvider>
 			</div>
 		</main>
 	);

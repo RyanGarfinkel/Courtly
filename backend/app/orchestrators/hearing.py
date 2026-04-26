@@ -1,5 +1,6 @@
 from app.agents import judge as judge_agent, opposing_counsel as counsel_agent, scorer
 from app.models.hearing import HearingState, HearingMessage, HearingRuling, JudgeConfig
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 import random
 import uuid
@@ -93,28 +94,31 @@ def process_turn(
 		score = judge_agent.score_response(current_judge, last_question, user_response, state.brief)
 		state.disposition_scores[current_judge.id] = max(-5, min(5, state.disposition_scores[current_judge.id] + score))
 
-		# Add judge's reaction to the answer
-		reaction = judge_agent.react_to_response(current_judge, last_question, user_response, score)
-		reaction_msg = _make_message(current_judge.name, current_judge.id, reaction, 'statement')
-		state.messages.append(reaction_msg)
-		new_messages.append(reaction_msg)
-
 		if state.turn < state.total_turns:
+			next_judge = _judge_by_id(state.questioning_order[state.turn])
+			history_snapshot = list(state.messages)
+			with ThreadPoolExecutor(max_workers=2) as pool:
+				react_future = pool.submit(judge_agent.react_to_response, current_judge, last_question, user_response, score)
+				question_future = pool.submit(
+					judge_agent.ask_question,
+					next_judge, state.case_name, state.case_summary, state.brief, state.side, history_snapshot,
+				)
+				reaction = react_future.result()
+				question = question_future.result()
+
 			state.turn += 1
-			next_judge = _judge_by_id(state.questioning_order[state.turn - 1])
-			question = judge_agent.ask_question(
-				next_judge,
-				state.case_name,
-				state.case_summary,
-				state.brief,
-				state.side,
-				state.messages,
-			)
+			reaction_msg = _make_message(current_judge.name, current_judge.id, reaction, 'statement')
+			state.messages.append(reaction_msg)
+			new_messages.append(reaction_msg)
 			q_msg = _make_message(next_judge.name, next_judge.id, question, 'question')
 			state.messages.append(q_msg)
 			new_messages.append(q_msg)
-
 		else:
+			reaction = judge_agent.react_to_response(current_judge, last_question, user_response, score)
+			reaction_msg = _make_message(current_judge.name, current_judge.id, reaction, 'statement')
+			state.messages.append(reaction_msg)
+			new_messages.append(reaction_msg)
+
 			opposing_arg = counsel_agent.argue(
 				state.case_name,
 				state.case_summary,

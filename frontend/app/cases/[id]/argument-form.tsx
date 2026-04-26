@@ -2,27 +2,14 @@
 
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { useCase } from "@/contexts/case";
 import { useState } from "react";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
-interface Case
+export default function ArgumentForm()
 {
-	id: string;
-	name: string;
-	year: number;
-	category: string;
-	summary: string;
-	citation: string;
-}
-
-interface Props
-{
-	case_: Case;
-}
-
-export default function ArgumentForm({ case_ }: Props)
-{
+	const case_ = useCase();
 	const [argument, setArgument] = useState("");
 	const [submitted, setSubmitted] = useState(false);
 	const [submitting, setSubmitting] = useState(false);

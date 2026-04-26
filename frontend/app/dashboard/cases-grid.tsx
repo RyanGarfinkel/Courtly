@@ -1,25 +1,16 @@
 'use client';
 
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import Link from "next/link";
-import { useCallback, useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Case } from "@/types/case";
+import Link from "next/link";
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
-
-interface Case
-{
-	id: string;
-	name: string;
-	year: number;
-	category: string;
-	summary: string;
-	citation: string;
-}
 
 interface ExternalCase
 {
@@ -76,6 +67,7 @@ export default function CasesGrid({ cases: initialCases, page, totalCount, total
 	const [externalLoading, setExternalLoading] = useState<boolean>(false);
 
 	const [popularCases, setPopularCases] = useState<Case[]>([]);
+	const [popularLoading, setPopularLoading] = useState<boolean>(false);
 	// index for manual popular-cases navigation
 	const [popularIndex, setPopularIndex] = useState<number>(0);
 
@@ -89,6 +81,7 @@ export default function CasesGrid({ cases: initialCases, page, totalCount, total
 	const [displayedCases, setDisplayedCases] = useState<Case[]>(initialCases);
 	const [loadMoreLoading, setLoadMoreLoading] = useState(false);
 	const [hasMoreResults, setHasMoreResults] = useState(initialCases.length === 6);
+	const [searchLoading, setSearchLoading] = useState(false);
 
 	// ensure popularIndex stays in bounds if popularCases changes (3 per page)
 	useEffect(() => {
@@ -139,6 +132,7 @@ export default function CasesGrid({ cases: initialCases, page, totalCount, total
 		Promise.resolve().then(() => {
 			setDisplayedCases(initialCases);
 			setHasMoreResults(initialCases.length === 6);
+			setSearchLoading(false);
 		});
 	}, [initialCases]);
 
@@ -152,6 +146,7 @@ export default function CasesGrid({ cases: initialCases, page, totalCount, total
 
 		const timeout = window.setTimeout(() =>
 		{
+			setSearchLoading(true);
 			router.replace(nextHref);
 		}, 300);
 
@@ -260,14 +255,17 @@ export default function CasesGrid({ cases: initialCases, page, totalCount, total
 	useEffect(() => {
 		const loadPopular = async () => {
 			if(!showPopular) return;
+			setPopularLoading(true);
 			try {
 				const url = `${API_URL}/cases/popular?limit=6`;
 				const res = await fetch(url);
 				if(!res.ok) throw new Error();
 				const data = await res.json();
-				if (data.cases) setPopularCases(data.cases);
+				if(data.cases) setPopularCases(data.cases);
 			} catch {
 				setPopularCases([]);
+			} finally {
+				setPopularLoading(false);
 			}
 		};
 
@@ -324,15 +322,34 @@ export default function CasesGrid({ cases: initialCases, page, totalCount, total
 					</div>
 				</div>
 
-				<Link href="/dashboard/cases/custom">
+				<Link href="/cases/custom">
 					<Button className="font-semibold h-10">
 						+ Build your own case
 					</Button>
 				</Link>
 			</div>
 
-			{/* show message only when a user performed a search/filters but there are no local or external results */}
-			{( isSearching && displayedCases.length === 0 && externalResults.length === 0) && (
+			{isSearching && searchLoading && (
+				<div className="flex gap-4 px-6 py-2">
+					{Array.from({ length: 3 }).map((_, i) => (
+						<div key={i} className="flex-none w-full sm:w-[calc(50%-8px)] lg:w-[calc(33.333%-10.666px)]">
+							<div className="min-h-[220px] rounded-xl border border-border bg-card flex flex-col p-4 gap-3 animate-pulse">
+								<div className="flex items-center justify-between">
+									<div className="h-4 w-20 bg-muted rounded-full" />
+									<div className="h-3 w-8 bg-muted rounded" />
+								</div>
+								<div className="h-5 w-3/4 bg-muted rounded" />
+								<div className="h-4 w-full bg-muted rounded" />
+								<div className="h-4 w-full bg-muted rounded" />
+								<div className="h-4 w-5/6 bg-muted rounded" />
+								<div className="mt-auto h-3 w-28 bg-muted rounded" />
+							</div>
+						</div>
+					))}
+				</div>
+			)}
+
+			{isSearching && !searchLoading && displayedCases.length === 0 && externalResults.length === 0 && (
 				<p className="text-sm text-muted-foreground">No cases match your search.</p>
 			)}
 
@@ -394,7 +411,7 @@ export default function CasesGrid({ cases: initialCases, page, totalCount, total
 								{displayedCases.map((c) => (
 									<div key={c.id} className="flex-none w-full sm:w-[calc(50%-8px)] lg:w-[calc(33.333%-10.666px)]">
 										<Link
-											href={`/dashboard/cases/${c.id}`}
+											href={`/cases/${c.id}`}
 											className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-xl block h-full"
 										>
 											<Card className="h-full flex flex-col hover:bg-muted transition-colors cursor-pointer min-h-[220px]">
@@ -410,6 +427,9 @@ export default function CasesGrid({ cases: initialCases, page, totalCount, total
 												</CardContent>
 												<CardFooter>
 													<span className="text-xs text-muted-foreground">{c.citation}</span>
+													{c.court_listener_link && (
+														<button onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.open(c.court_listener_link!, '_blank', 'noopener,noreferrer'); }} className="ml-2 text-xs text-primary hover:underline cursor-pointer">CourtListener →</button>
+													)}
 												</CardFooter>
 											</Card>
 										</Link>
@@ -483,7 +503,35 @@ export default function CasesGrid({ cases: initialCases, page, totalCount, total
 				</p>
 			)}
 
-			{showPopular && (
+			{showPopular && popularLoading && (
+				<div className="w-full mt-4 mb-10">
+					<div className="flex items-center justify-between mb-2">
+						<div />
+						<div className="h-4 w-24 bg-muted rounded animate-pulse" />
+						<div />
+					</div>
+					<div className="flex gap-4 px-6 py-2">
+						{Array.from({ length: 3 }).map((_, i) => (
+							<div key={i} className="flex-none w-full sm:w-[calc(50%-8px)] lg:w-[calc(33.333%-10.666px)]">
+								<div className="h-[380px] rounded-xl border border-border bg-card flex flex-col p-6 gap-3 animate-pulse">
+									<div className="flex items-center justify-between">
+										<div className="h-4 w-20 bg-muted rounded-full" />
+										<div className="h-3 w-8 bg-muted rounded" />
+									</div>
+									<div className="h-6 w-3/4 bg-muted rounded" />
+									<div className="h-4 w-full bg-muted rounded" />
+									<div className="h-4 w-full bg-muted rounded" />
+									<div className="h-4 w-5/6 bg-muted rounded" />
+									<div className="h-4 w-full bg-muted rounded" />
+									<div className="mt-auto h-3 w-28 bg-muted rounded" />
+								</div>
+							</div>
+						))}
+					</div>
+				</div>
+			)}
+
+			{showPopular && !popularLoading && (
 				<div className="w-full h-auto mt-4 mb-10">
 					<div className="flex items-center justify-between mb-2">
 						<div />
@@ -507,7 +555,7 @@ export default function CasesGrid({ cases: initialCases, page, totalCount, total
 								{popularCases.map((pc, i) => (
 									<div key={pc.id} className="flex-none w-full sm:w-[calc(50%-8px)] lg:w-[calc(33.333%-10.666px)]">
 										<Link
-											href={`/dashboard/cases/${pc.id}`}
+											href={`/cases/${pc.id}`}
 											className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-xl block h-full"
 										>
 											<Card className="h-[380px] flex flex-col hover:bg-muted transition-colors cursor-pointer shadow-xl border-primary/10">
@@ -523,6 +571,9 @@ export default function CasesGrid({ cases: initialCases, page, totalCount, total
 												</CardContent>
 												<CardFooter className="p-4 pt-0">
 													<span className="text-[12px] text-muted-foreground truncate">{pc.citation}</span>
+													{pc.court_listener_link && (
+														<button onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.open(pc.court_listener_link!, '_blank', 'noopener,noreferrer'); }} className="ml-2 text-xs text-primary hover:underline cursor-pointer">CourtListener →</button>
+													)}
 												</CardFooter>
 											</Card>
 										</Link>

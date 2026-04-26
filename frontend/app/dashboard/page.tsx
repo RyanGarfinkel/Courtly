@@ -1,14 +1,5 @@
+import { Case } from "@/types/case";
 import CasesGrid from "./cases-grid";
-
-interface Case
-{
-	id: string;
-	name: string;
-	year: number;
-	category: string;
-	summary: string;
-	citation: string;
-}
 
 interface CasesResponse
 {
