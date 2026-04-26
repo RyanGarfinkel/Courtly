@@ -1,15 +1,15 @@
-from app.controllers.retriever import router as retriever_router
-from app.controllers.hearing import router as hearing_router
-from app.controllers.research import router as research_router
-from app.controllers.brief import router as brief_router
-from app.controllers.cases import router as cases_router
 from app.controllers.external_cases import router as external_cases_router
+from app.controllers.retriever import router as retriever_router
+from app.controllers.research import router as research_router
+from app.controllers.hearing import router as hearing_router
+from app.controllers.cases import router as cases_router
+from app.controllers.brief import router as brief_router
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
+from pathlib import Path
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
 
-load_dotenv()
+load_dotenv(Path(__file__).parent / ".env")
 
 app = FastAPI(title="Courtly API")
 
