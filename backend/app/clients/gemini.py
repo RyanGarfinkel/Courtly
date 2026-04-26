@@ -1,8 +1,10 @@
+from google.genai.errors import ServerError
+from google import genai
+import time
 import os
 
-from google import genai
-
 MODEL = "gemini-3-flash-preview"
+MAX_RETRIES = 3
 
 
 class GeminiClient:
@@ -23,8 +25,15 @@ class GeminiClient:
         return self._client
 
     def generate(self, prompt: str) -> str:
-        response = self._get_client().models.generate_content(
-            model=MODEL,
-            contents=prompt,
-        )
-        return response.text
+        for attempt in range(MAX_RETRIES):
+            try:
+                response = self._get_client().models.generate_content(
+                    model=MODEL,
+                    contents=prompt,
+                )
+                return response.text
+            except ServerError as e:
+                if e.status_code == 503 and attempt < MAX_RETRIES - 1:
+                    time.sleep(2 ** attempt)
+                    continue
+                raise

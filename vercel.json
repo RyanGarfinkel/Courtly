@@ -1,0 +1,24 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "frontend/package.json",
+      "use": "@vercel/next"
+    },
+    {
+      "src": "backend/main.py",
+      "use": "@vercel/python"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(cases|hearing|brief|research|retriever|external-cases|health)(/?.*)",
+      "dest": "backend/main.py"
+    }
+  ],
+  "functions": {
+    "backend/main.py": {
+      "maxDuration": 60
+    }
+  }
+}
