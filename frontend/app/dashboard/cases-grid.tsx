@@ -54,13 +54,10 @@ export default function CasesGrid({ cases: initialCases, page, totalCount, total
 	}, [pathname, searchParams]);
 
 	// Advanced filters state
-	const [issue, setIssue] = useState<string>(searchParams.get("category") ?? "");
 	const [searchQuery, setSearchQuery] = useState<string>(searchParams.get("q") ?? "");
 	const [yearFrom, setYearFrom] = useState<string>(searchParams.get("year_from") ?? "");
 	const [yearTo, setYearTo] = useState<string>(searchParams.get("year_to") ?? "");
 	const [keyword, setKeyword] = useState<string>(searchParams.get("keyword") ?? "");
-
-	const [issuesList, setIssuesList] = useState<string[]>([]);
 
 	const [externalResults, setExternalResults] = useState<ExternalCase[]>([]);
 	const [externalPage, setExternalPage] = useState<number>(1);
@@ -77,10 +74,7 @@ export default function CasesGrid({ cases: initialCases, page, totalCount, total
 	const [displayedIndex, setDisplayedIndex] = useState<number>(0);
 	const displayedTrackRef = useRef<HTMLDivElement | null>(null);
 	
-	// Load more state
 	const [displayedCases, setDisplayedCases] = useState<Case[]>(initialCases);
-	const [loadMoreLoading, setLoadMoreLoading] = useState(false);
-	const [hasMoreResults, setHasMoreResults] = useState(initialCases.length === 6);
 	const [searchLoading, setSearchLoading] = useState(false);
 
 	// ensure popularIndex stays in bounds if popularCases changes (3 per page)
@@ -124,14 +118,13 @@ export default function CasesGrid({ cases: initialCases, page, totalCount, total
 	}, [displayedIndex]);
 
 	// Animation visibility: only show if no search inputs AND no results (initial or external)
-	const isSearching = Boolean(searchQuery || issue || yearFrom || yearTo || keyword);
+	const isSearching = Boolean(searchQuery || yearFrom || yearTo || keyword);
 	const showPopular = !isSearching && displayedCases.length === 0 && externalResults.length === 0;
 
 	// Reset displayed cases when initialCases change (e.g. on new search)
 	useEffect(() => {
 		Promise.resolve().then(() => {
 			setDisplayedCases(initialCases);
-			setHasMoreResults(initialCases.length === 6);
 			setSearchLoading(false);
 		});
 	}, [initialCases]);
@@ -159,9 +152,6 @@ export default function CasesGrid({ cases: initialCases, page, totalCount, total
 	const applyAdvancedFilters = () =>
 	{
 		const params = new URLSearchParams(searchParams.toString());
-
-		if(issue) params.set("category", issue);
-		else params.delete("category");
 
 		if(searchQuery) params.set("q", searchQuery);
 		else params.delete("q");
@@ -197,38 +187,8 @@ export default function CasesGrid({ cases: initialCases, page, totalCount, total
 		}
 	};
 
-	const loadMoreCases = async () => {
-		setLoadMoreLoading(true);
-		try {
-			const currentIds = displayedCases.map(c => c.id).join(",");
-			const url = new URL(`${API_URL}/cases`);
-			if (searchQuery) url.searchParams.set("q", searchQuery);
-			if (issue) url.searchParams.set("category", issue);
-			if (yearFrom) url.searchParams.set("year_from", yearFrom);
-			if (yearTo) url.searchParams.set("year_to", yearTo);
-			if (keyword) url.searchParams.set("keyword", keyword);
-			url.searchParams.set("exclude", currentIds);
-			url.searchParams.set("limit", "6");
-
-			const res = await fetch(url.toString());
-			if (!res.ok) throw new Error();
-			const data = await res.json();
-			if (data.cases && data.cases.length > 0) {
-				setDisplayedCases(prev => [...prev, ...data.cases]);
-				setHasMoreResults(data.cases.length === 6);
-			} else {
-				setHasMoreResults(false);
-			}
-		} catch {
-			setHasMoreResults(false);
-		} finally {
-			setLoadMoreLoading(false);
-		}
-	};
-
 	const resetFilters = () => {
 		setSearchQuery("");
-		setIssue("");
 		setYearFrom("");
 		setYearTo("");
 		setKeyword("");
@@ -236,20 +196,6 @@ export default function CasesGrid({ cases: initialCases, page, totalCount, total
 		setDisplayedCases([]);
 		router.replace(pathname);
 	};
-
-	// load static issues once
-	useEffect(() => { 
-		const loadIssues = async () =>
-		{
-			try {
-				const res = await fetch(`${API_URL}/cases/issues`);
-				if(!res.ok) return;
-				const data = await res.json();
-				setIssuesList(data.issues || []);
-			} catch {}
-		};
-		loadIssues(); 
-	}, []);
 
 	// load popular cases when there is no active search/filters
 	useEffect(() => {
@@ -302,10 +248,6 @@ export default function CasesGrid({ cases: initialCases, page, totalCount, total
 								</AccordionTrigger>
 								<AccordionContent className="pt-4">
 									<div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-										<select value={issue} onChange={e => setIssue(e.target.value)} className="border border-border rounded-md px-2 py-1 h-10 bg-background">
-											<option value="">All issues</option>
-											{issuesList.map(i => <option key={i} value={i}>{i}</option>)}
-										</select>
 										<Input placeholder="Keywords (comma separated)" value={keyword} onChange={e => setKeyword(e.target.value)} className="h-10" />
 										<Input placeholder="Year from" type="number" value={yearFrom} onChange={e => setYearFrom(e.target.value)} className="h-10" />
 										<Input placeholder="Year to" type="number" value={yearTo} onChange={e => setYearTo(e.target.value)} className="h-10" />
@@ -482,18 +424,7 @@ export default function CasesGrid({ cases: initialCases, page, totalCount, total
 						)}
 					</div>
 
-					{hasMoreResults && (
-						<div className="flex justify-center">
-							<Button 
-								variant="outline" 
-								onClick={loadMoreCases} 
-								disabled={loadMoreLoading}
-								className="w-full max-w-xs"
-							>
-								{loadMoreLoading ? "Generating..." : "Generate more cases"}
-							</Button>
-						</div>
-					)}
+
 				</div>
 			)}
 

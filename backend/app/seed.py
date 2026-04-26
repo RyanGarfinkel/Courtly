@@ -1,5 +1,9 @@
+from concurrent.futures import ThreadPoolExecutor
+
 from app.clients.courtlistener import CourtListenerClient
 from app.clients.mongo import get_db
+
+SEED_WORKERS = 3
 
 JUDGES = [
 	{
@@ -74,22 +78,28 @@ _PRESET_NAMES = [
 ]
 
 
-def run() -> None:
+def _seed_one(name: str, db) -> None:
 	from app.controllers.cases import _map_cl
 
+	cl = CourtListenerClient()
+	try:
+		results = cl.search_opinions(name, limit=1)
+		if not results:
+			return
+		case = _map_cl(results[0], cl=cl)
+		if case:
+			db["cases"].replace_one({"id": case["id"]}, case, upsert=True)
+	finally:
+		cl.close()
+
+
+def run() -> None:
 	db = get_db()
 
 	if db["judges"].count_documents({}) == 0:
 		db["judges"].insert_many(JUDGES)
 
-	cl = CourtListenerClient()
-	try:
-		for name in _PRESET_NAMES:
-			results = cl.search_opinions(name, limit=1)
-			if not results:
-				continue
-			case = _map_cl(results[0], cl=cl)
-			if case:
-				db["cases"].replace_one({"id": case["id"]}, case, upsert=True)
-	finally:
-		cl.close()
+	with ThreadPoolExecutor(max_workers=SEED_WORKERS) as pool:
+		futures = [pool.submit(_seed_one, name, db) for name in _PRESET_NAMES]
+		for f in futures:
+			f.result()

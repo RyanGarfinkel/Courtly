@@ -1,5 +1,6 @@
 import hashlib
 import re
+from concurrent.futures import ThreadPoolExecutor
 
 from fastapi import APIRouter, Query
 from pydantic import BaseModel
@@ -7,6 +8,8 @@ from pydantic import BaseModel
 from app.clients.courtlistener import CourtListenerClient
 from app.clients.gemini import GeminiClient
 from app.clients.mongo import get_db
+
+EXPAND_WORKERS = 3
 
 router = APIRouter(prefix="/cases", tags=["cases"])
 
@@ -26,7 +29,7 @@ Context from the opinion: {snippet}"""
 		return snippet
 
 
-def _map_cl(result: dict, override_id: str | None = None, cl: CourtListenerClient | None = None) -> dict | None:
+def _map_cl(result: dict, override_id: str | None = None, cl: CourtListenerClient | None = None, expand: bool = True) -> dict | None:
 	name = result.get("caseName", "").strip()
 	if not name:
 		return None
@@ -52,7 +55,7 @@ def _map_cl(result: dict, override_id: str | None = None, cl: CourtListenerClien
 		"name": name,
 		"year": year,
 		"category": result.get("suitNature") or "Supreme Court",
-		"summary": _expand_summary(name, snippet),
+		"summary": _expand_summary(name, snippet) if expand else snippet,
 		"citation": citations[0] if citations else "",
 		"court_listener_link": f"https://www.courtlistener.com{raw_url}" if raw_url else None,
 		"panel": panel,
@@ -63,7 +66,17 @@ def _cl_search(query: str, limit: int = 5) -> list[dict]:
 	cl = CourtListenerClient()
 	try:
 		results = cl.search_opinions(query, limit=limit)
-		cases = [c for r in results if (c := _map_cl(r, cl=cl))]
+		cases = [c for r in results if (c := _map_cl(r, cl=cl, expand=False))]
+
+		def _expand(case: dict) -> dict:
+			case["summary"] = _expand_summary(case["name"], case["summary"])
+			return case
+
+		with ThreadPoolExecutor(max_workers=EXPAND_WORKERS) as pool:
+			cases = list(pool.map(_expand, cases))
+
+		cases = list({c["id"]: c for c in cases}.values())
+
 		col = get_db()["cases"]
 		for c in cases:
 			col.replace_one({"id": c["id"]}, c, upsert=True)
@@ -84,15 +97,6 @@ class CaseCreate(BaseModel):
 	category: str = "Custom"
 	year: int = 0
 	citation: str = ""
-
-
-@router.get("/issues")
-def get_issues():
-	return {"issues": [
-		"First Amendment", "Second Amendment", "Due Process", "Equal Protection",
-		"Commerce Clause", "Search and Seizure", "Criminal Procedure", "Civil Rights",
-		"Executive Power", "Federalism", "Privacy", "Voting Rights",
-	]}
 
 
 @router.get("/popular")
@@ -130,7 +134,7 @@ def get_cases(
 	))
 	mongo_results = [c for c in mongo_results if c["id"] not in exclude_ids]
 
-	if len(mongo_results) >= n:
+	if mongo_results:
 		return {
 			"cases": mongo_results[:n],
 			"query": search_query,

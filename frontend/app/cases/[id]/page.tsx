@@ -6,6 +6,7 @@ import { Case } from "@/types/case";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
 import { ExternalLink, Scale, Shield } from "lucide-react";
+import { marked } from "marked";
 
 async function getCase(id: string): Promise<Case | null>
 {
@@ -68,9 +69,10 @@ export default async function CasePage({ params }: Props)
 					</div>
 				</div>
 
-				<div className="prose prose-slate dark:prose-invert max-w-none text-muted-foreground leading-relaxed mb-12 whitespace-pre-line text-base">
-					{c.summary}
-				</div>
+				<div 
+					className="prose prose-slate dark:prose-invert max-w-none text-muted-foreground leading-relaxed mb-12 whitespace-pre-line text-base"
+					dangerouslySetInnerHTML={{ __html: marked.parse(c.summary) as string }}
+				/>
 
 				<Card className="bg-muted/30 border-muted">
 					<CardHeader>
@@ -82,15 +84,15 @@ export default async function CasePage({ params }: Props)
 					<CardContent>
 						<div className="grid sm:grid-cols-2 gap-4 mt-2">
 							<Button asChild size="lg" className="w-full text-base h-16 group relative overflow-hidden transition-all hover:ring-2 hover:ring-primary hover:ring-offset-2">
-								<Link href={`/cases/${c.id}/brief?side=plaintiff`}>
-									<Scale className="w-5 h-5 mr-3 transition-transform group-hover:scale-110" />
-									Argue as Plaintiff
+								<Link href={`/cases/${c.id}/brief?side=plaintiff`} className="flex flex-row items-center justify-center gap-3">
+									<Scale className="w-5 h-5 transition-transform group-hover:scale-110 shrink-0" />
+									<span>Argue as Plaintiff</span>
 								</Link>
 							</Button>
 							<Button asChild size="lg" variant="outline" className="w-full text-base h-16 group relative overflow-hidden transition-all hover:bg-muted/80">
-								<Link href={`/cases/${c.id}/brief?side=defendant`}>
-									<Shield className="w-5 h-5 mr-3 transition-transform group-hover:scale-110" />
-									Argue as Defense
+								<Link href={`/cases/${c.id}/brief?side=defendant`} className="flex flex-row items-center justify-center gap-3">
+									<Shield className="w-5 h-5 transition-transform group-hover:scale-110 shrink-0" />
+									<span>Argue as Defense</span>
 								</Link>
 							</Button>
 						</div>
