@@ -1,33 +1,14 @@
 'use client';
 
+import { HearingMessage } from '@/types/hearing';
+import { JUDGE_MAP } from './judges';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-
-interface HearingMessage
-{
-	id: string;
-	speaker: string;
-	speaker_id: string;
-	content: string;
-	type: string;
-}
 
 interface Props
 {
 	message: HearingMessage;
 }
-
-const PHILOSOPHY_LABELS: Record<string, string> = {
-	hale: 'Textualist',
-	okafor: 'Original Intent',
-	voss: 'Living Const.',
-	crane: 'Pragmatist',
-	mirande: 'Civil Libertarian',
-	ashworth: 'Structuralist',
-	lim: 'Precedent-First',
-	ndidi: 'Natural Law',
-	solis: 'Balancing Test',
-};
 
 export default function Bubble({ message }: Props)
 {
@@ -35,6 +16,7 @@ export default function Bubble({ message }: Props)
 	const isCourt = message.speaker_id === 'court';
 	const isOpposing = message.speaker_id === 'opposing_counsel';
 	const isJustice = !isUser && !isCourt && !isOpposing;
+	const philosophy = JUDGE_MAP[message.speaker_id]?.philosophy;
 
 	if(isCourt)
 	{
@@ -53,9 +35,9 @@ export default function Bubble({ message }: Props)
 				{!isUser && (
 					<span className="text-xs font-medium text-foreground">{message.speaker}</span>
 				)}
-				{isJustice && PHILOSOPHY_LABELS[message.speaker_id] && (
+				{isJustice && philosophy && (
 					<Badge variant="outline" className="text-[10px] px-1.5 py-0">
-						{PHILOSOPHY_LABELS[message.speaker_id]}
+						{philosophy}
 					</Badge>
 				)}
 				{isOpposing && (

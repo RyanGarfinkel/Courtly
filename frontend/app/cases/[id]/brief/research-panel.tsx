@@ -4,8 +4,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { useCallback, useEffect, useState } from "react";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+import { API_URL } from "@/lib/api";
 
 interface Citation
 {
@@ -57,10 +56,7 @@ export default function ResearchPanel({ caseId, caseName }: Props)
 
 	useEffect(() =>
 	{
-		const run = async () => {
-			await loadResearch();
-		};
-		run();
+		loadResearch();
 	}, [loadResearch]);
 
 	if(loading)

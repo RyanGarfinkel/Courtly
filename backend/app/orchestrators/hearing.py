@@ -6,6 +6,7 @@ import random
 import uuid
 import json
 
+PREFERRED_QUESTIONER_IDS = ['hale', 'voss', 'crane', 'lim']
 
 _JUDGES_PATH = Path(__file__).parent.parent.parent / 'config' / 'judges.json'
 
@@ -43,9 +44,8 @@ def start(
 ) -> tuple[HearingState, list[HearingMessage]]:
 	judges = _load_judges()
 
-	preferred_ids = ['hale', 'voss', 'crane', 'lim']
-	preferred = [j for j in judges if j.id in preferred_ids]
-	remaining = [j for j in judges if j.id not in preferred_ids]
+	preferred = [j for j in judges if j.id in PREFERRED_QUESTIONER_IDS]
+	remaining = [j for j in judges if j.id not in PREFERRED_QUESTIONER_IDS]
 	random.shuffle(preferred)
 	random.shuffle(remaining)
 	questioning_order = [j.id for j in (preferred + remaining)[:4]]

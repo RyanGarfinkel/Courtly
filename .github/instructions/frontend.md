@@ -60,3 +60,9 @@ applyTo: "**/*.tsx,**/*.ts,**/app/**,**/components/**,**/pages/**"
 - Component prop interfaces defined in the same file as the component
 - Pages live in `app/` (App Router); reusable components live in `components/`
 - Page-specific components co-located with the page, not in `components/`
+
+## Code Quality
+- **Reuse before creating** — search `components/` before building anything new. If it almost fits, extend it. Only create new if nothing close exists.
+- **No dead code** — delete unused imports, variables, components, types, and branches immediately. Do not comment them out.
+- **No hardcoded data** — no hardcoded IDs, user-facing content, or business values. System prompts and agent instruction strings are acceptable constants. All other runtime or environment-varying values must be externalized.
+- **Clean code** — names should be self-explanatory. No unnecessary abstractions, no over-engineered solutions. Build what is needed now.

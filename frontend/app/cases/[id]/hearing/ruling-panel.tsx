@@ -1,37 +1,9 @@
 'use client';
 
+import { HearingRuling } from '@/types/hearing';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-
-interface JudgeVote
-{
-	judge_id: string;
-	judge_name: string;
-	vote: 'for' | 'against';
-	opinion_type: 'majority' | 'concurrence' | 'dissent';
-	opinion: string;
-}
-
-interface HearingScores
-{
-	consistency: number;
-	precedent: number;
-	responsiveness: number;
-	overall: number;
-}
-
-interface HearingRuling
-{
-	result: 'affirmed' | 'reversed';
-	vote_for: number;
-	vote_against: number;
-	majority_opinion: JudgeVote;
-	concurrences: JudgeVote[];
-	dissents: JudgeVote[];
-	scores: HearingScores;
-	swing_justices: string[];
-}
 
 interface Props
 {

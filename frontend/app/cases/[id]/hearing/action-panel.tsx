@@ -1,31 +1,11 @@
 'use client';
 
+import { HearingRuling } from '@/types/hearing';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import AssistantPanel from './assistant-panel';
 import ResponseStudio from './response-studio';
 import RulingPanel from './ruling-panel';
-
-interface JudgeVote
-{
-	judge_id: string;
-	judge_name: string;
-	vote: 'for' | 'against';
-	opinion_type: 'majority' | 'concurrence' | 'dissent';
-	opinion: string;
-}
-
-interface HearingRuling
-{
-	result: 'affirmed' | 'reversed';
-	vote_for: number;
-	vote_against: number;
-	majority_opinion: JudgeVote;
-	concurrences: JudgeVote[];
-	dissents: JudgeVote[];
-	scores: { consistency: number; precedent: number; responsiveness: number; overall: number };
-	swing_justices: string[];
-}
 
 interface Props
 {

@@ -1,45 +1,16 @@
 'use client';
 
+import { HearingMessage, HearingRuling } from '@/types/hearing';
 import { useEffect, useRef, useState } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { useCase } from '@/contexts/case';
+import { JUDGES } from './judges';
+import { API_URL } from '@/lib/api';
 import ActionPanel from './action-panel';
 import BenchHeader from './bench-header';
 import CourtIntro from './court-intro';
 import Bubble from './bubble';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000';
-
-interface HearingMessage
-{
-	id: string;
-	speaker: string;
-	speaker_id: string;
-	content: string;
-	type: string;
-}
-
-interface JudgeVote
-{
-	judge_id: string;
-	judge_name: string;
-	vote: 'for' | 'against';
-	opinion_type: 'majority' | 'concurrence' | 'dissent';
-	opinion: string;
-}
-
-interface HearingRuling
-{
-	result: 'affirmed' | 'reversed';
-	vote_for: number;
-	vote_against: number;
-	majority_opinion: JudgeVote;
-	concurrences: JudgeVote[];
-	dissents: JudgeVote[];
-	scores: { consistency: number; precedent: number; responsiveness: number; overall: number };
-	swing_justices: string[];
-}
 
 interface Props
 {
@@ -53,7 +24,7 @@ const PHASE_LABELS: Record<string, string> = {
 	concluded: 'Deliberation Complete',
 };
 
-const JUSTICE_IDS = new Set(['hale', 'okafor', 'voss', 'crane', 'mirande', 'ashworth', 'lim', 'ndidi', 'solis']);
+const JUSTICE_IDS = new Set(JUDGES.map(j => j.id));
 
 export default function HearingRoom({ hearingId, side }: Props)
 {
@@ -89,7 +60,6 @@ export default function HearingRoom({ hearingId, side }: Props)
 
 	async function handleSubmit(response: string)
 	{
-		// Optimistically add user message
 		const userMsg: HearingMessage = {
 			id: `temp-${Date.now()}`,
 			speaker: 'You',
@@ -97,7 +67,7 @@ export default function HearingRoom({ hearingId, side }: Props)
 			content: response,
 			type: 'statement'
 		};
-		
+
 		setMessages(prev => [...prev, userMsg]);
 		setLoading(true);
 
@@ -108,22 +78,20 @@ export default function HearingRoom({ hearingId, side }: Props)
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ hearing_id: hearingId, user_response: response }),
 			});
-			
+
 			if(!res.ok) throw new Error('Failed to submit response');
-			
+
 			const data = await res.json();
-			
-			// Replace temp message and add new ones
+
 			setMessages(prev => {
 				const filtered = prev.filter(m => !m.id.startsWith('temp-'));
 				return [...filtered, ...data.messages];
 			});
-			
+
 			setPhase(data.phase);
 			setTurn(data.turn ?? turn);
 			if(data.ruling) setRuling(data.ruling);
 
-			// Update storage with ALL messages
 			sessionStorage.setItem(`hearing_${hearingId}`, JSON.stringify({
 				messages: [...messages, ...data.messages],
 				phase: data.phase,

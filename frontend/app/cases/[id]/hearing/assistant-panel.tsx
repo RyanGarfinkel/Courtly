@@ -2,9 +2,8 @@
 
 import { Skeleton } from '@/components/ui/skeleton';
 import { useEffect, useState, useRef } from 'react';
+import { API_URL } from '@/lib/api';
 import { cn } from '@/lib/utils';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000';
 
 const PRESETS = [
 	{ label: 'What just happened?', question: '' },
@@ -56,7 +55,7 @@ export default function AssistantPanel({ hearingId, pendingQuestion }: Props)
 
 	useEffect(() =>
 	{
-		if (pendingQuestion && !processedQuestions.current.has(pendingQuestion.id))
+		if(pendingQuestion && !processedQuestions.current.has(pendingQuestion.id))
 		{
 			processedQuestions.current.add(pendingQuestion.id);
 			callAssist(

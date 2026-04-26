@@ -69,6 +69,12 @@ backend/
 - Functions and variables: `snake_case`
 - Constants: `UPPER_SNAKE_CASE`
 
+## Code Quality
+- **No dead code** — delete unused imports, functions, models, and variables immediately. Do not comment them out.
+- **No hardcoded data** — no hardcoded business values, IDs, or user-facing content in source files. System prompts and agent instruction strings are acceptable constants. All other runtime-varying values must come from environment variables or the database.
+- **Optimized architecture** — controllers handle HTTP only, services own logic, agents do AI reasoning, clients wrap external APIs. Nothing bleeds across layers. If a layer is doing work it doesn't own, move it.
+- **Clean code** — self-explanatory naming at every layer. No unnecessary abstractions. Build what is needed now; do not pre-engineer for hypothetical requirements.
+
 ## Running
 
 ```bash

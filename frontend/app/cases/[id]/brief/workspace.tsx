@@ -13,9 +13,8 @@ import { marked } from "marked";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useCase } from "@/contexts/case";
+import { API_URL } from "@/lib/api";
 import { cn } from "@/lib/utils";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
 interface Props
 {

@@ -3,9 +3,8 @@
 import { useEffect, useCallback, useState } from 'react';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
+import { API_URL } from '@/lib/api';
 import { cn } from '@/lib/utils';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000';
 
 interface StressTestResult
 {
