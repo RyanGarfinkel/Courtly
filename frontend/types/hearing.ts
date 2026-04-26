@@ -58,4 +58,5 @@ export interface HearingState
 	messages: HearingMessage[];
 	disposition_scores: Record<string, number>;
 	questioning_order: string[];
+	match_id?: string;
 }

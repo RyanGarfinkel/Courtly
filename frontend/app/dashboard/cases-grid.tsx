@@ -4,6 +4,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
+import { BookmarkCheck, Bookmark } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -32,9 +33,10 @@ interface Props
 	totalCount: number;
 	totalPages: number;
 	pageSize: number;
+	userId: string | null;
 }
 
-export default function CasesGrid({ cases: initialCases, page, totalCount, totalPages, pageSize }: Props)
+export default function CasesGrid({ cases: initialCases, page, totalCount, totalPages, pageSize, userId }: Props)
 {
 	const router = useRouter();
 	const pathname = usePathname();
@@ -68,8 +70,13 @@ export default function CasesGrid({ cases: initialCases, page, totalCount, total
 	const [displayedCases, setDisplayedCases] = useState<Case[]>(initialCases);
 	const [searchLoading, setSearchLoading] = useState(false);
 
+	const [myCases, setMyCases] = useState<Case[]>([]);
+	const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
+	const [myLoading, setMyLoading] = useState(false);
+
 	const isSearching = Boolean(searchQuery || yearFrom || yearTo || keyword);
 	const showPopular = !isSearching && displayedCases.length === 0 && externalResults.length === 0;
+	const showMyCases = !isSearching && !!userId;
 
 	useEffect(() => {
 		Promise.resolve().then(() => {
@@ -120,6 +127,79 @@ export default function CasesGrid({ cases: initialCases, page, totalCount, total
 
 		load();
 	}, [showPopular]);
+
+	useEffect(() =>
+	{
+		if(!showMyCases) return;
+		setMyLoading(true);
+
+		const load = async () =>
+		{
+			try
+			{
+				const res = await fetch('/api/cases/mine');
+				if(!res.ok) throw new Error();
+				const data = await res.json();
+				const combined = [...(data.custom ?? []), ...(data.saved ?? [])];
+				const seen = new Set<string>();
+				const deduped = combined.filter(c =>
+				{
+					if(seen.has(c.id)) return false;
+					seen.add(c.id);
+					return true;
+				});
+				setMyCases(deduped);
+				setSavedIds(new Set(deduped.map((c: Case) => c.id)));
+			}
+			catch
+			{
+				setMyCases([]);
+			}
+			finally
+			{
+				setMyLoading(false);
+			}
+		};
+
+		load();
+	}, [showMyCases]);
+
+	async function toggleSave(caseId: string)
+	{
+		const res = await fetch(`/api/cases/${caseId}/save`, { method: 'POST' });
+		const data = await res.json();
+
+		if(data.saved)
+		{
+			setSavedIds(prev => new Set(prev).add(caseId));
+		}
+		else
+		{
+			setSavedIds(prev =>
+			{
+				const next = new Set(prev);
+				next.delete(caseId);
+				return next;
+			});
+			setMyCases(prev => prev.filter(c => c.id !== caseId));
+		}
+
+		const refetch = await fetch('/api/cases/mine');
+		if(refetch.ok)
+		{
+			const refreshed = await refetch.json();
+			const combined = [...(refreshed.custom ?? []), ...(refreshed.saved ?? [])];
+			const seen = new Set<string>();
+			const deduped = combined.filter(c =>
+			{
+				if(seen.has(c.id)) return false;
+				seen.add(c.id);
+				return true;
+			});
+			setMyCases(deduped);
+			setSavedIds(new Set(deduped.map((c: Case) => c.id)));
+		}
+	}
 
 	const startIndex = totalCount === 0 ? 0 : (page - 1) * pageSize + 1;
 	const endIndex = totalCount === 0 ? 0 : Math.min(page * pageSize, totalCount);
@@ -306,7 +386,18 @@ export default function CasesGrid({ cases: initialCases, page, totalCount, total
 									<CardHeader className="pb-2">
 										<div className="flex items-center justify-between mb-1">
 											<Badge variant="secondary">{c.category}</Badge>
-											<span className="text-xs text-muted-foreground">{c.year}</span>
+											<div className="flex items-center gap-1">
+												<span className="text-xs text-muted-foreground">{c.year}</span>
+												{userId && (
+													<button
+														type="button"
+														onClick={e => { e.preventDefault(); e.stopPropagation(); toggleSave(c.id); }}
+														className={`ml-1 p-0.5 rounded transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${savedIds.has(c.id) ? 'text-primary' : 'text-muted-foreground'}`}
+													>
+														{savedIds.has(c.id) ? <BookmarkCheck size={14} /> : <Bookmark size={14} />}
+													</button>
+												)}
+											</div>
 										</div>
 										<CardTitle className="text-base leading-snug">{c.name}</CardTitle>
 									</CardHeader>
@@ -379,7 +470,18 @@ export default function CasesGrid({ cases: initialCases, page, totalCount, total
 									<CardHeader className="pb-2 p-6">
 										<div className="flex items-center justify-between mb-1">
 											<Badge variant="secondary" className="text-[10px] h-4 px-1">{pc.category}</Badge>
-											<span className="text-[10px] text-muted-foreground">{pc.year}</span>
+											<div className="flex items-center gap-1">
+												<span className="text-[10px] text-muted-foreground">{pc.year}</span>
+												{userId && (
+													<button
+														type="button"
+														onClick={e => { e.preventDefault(); e.stopPropagation(); toggleSave(pc.id); }}
+														className={`ml-1 p-0.5 rounded transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${savedIds.has(pc.id) ? 'text-primary' : 'text-muted-foreground'}`}
+													>
+														{savedIds.has(pc.id) ? <BookmarkCheck size={14} /> : <Bookmark size={14} />}
+													</button>
+												)}
+											</div>
 										</div>
 										<CardTitle className="text-lg font-bold leading-tight line-clamp-2">{pc.name}</CardTitle>
 									</CardHeader>
@@ -390,6 +492,92 @@ export default function CasesGrid({ cases: initialCases, page, totalCount, total
 										<span className="text-[12px] text-muted-foreground truncate">{pc.citation}</span>
 										{pc.court_listener_link && (
 											<button onClick={e => { e.preventDefault(); e.stopPropagation(); window.open(pc.court_listener_link!, '_blank', 'noopener,noreferrer'); }} className="ml-2 text-xs text-primary hover:underline cursor-pointer">CourtListener →</button>
+										)}
+									</CardFooter>
+								</Card>
+							</Link>
+						)}
+					/>
+				</div>
+			)}
+
+			{showMyCases && myLoading && (
+				<div className="w-full mt-4 mb-10">
+					<div className="flex items-center justify-between mb-2">
+						<div />
+						<div className="h-4 w-20 bg-muted rounded animate-pulse" />
+						<div />
+					</div>
+					<div className="flex gap-4 px-6 py-2">
+						{Array.from({ length: 3 }).map((_, i) => (
+							<div key={i} className="flex-none w-full sm:w-[calc(50%-8px)] lg:w-[calc(33.333%-10.666px)]">
+								<div className="h-[380px] rounded-xl border border-border bg-card flex flex-col p-6 gap-3 animate-pulse">
+									<div className="flex items-center justify-between">
+										<div className="h-4 w-20 bg-muted rounded-full" />
+										<div className="h-3 w-8 bg-muted rounded" />
+									</div>
+									<div className="h-6 w-3/4 bg-muted rounded" />
+									<div className="h-4 w-full bg-muted rounded" />
+									<div className="h-4 w-full bg-muted rounded" />
+									<div className="h-4 w-5/6 bg-muted rounded" />
+									<div className="h-4 w-full bg-muted rounded" />
+									<div className="mt-auto h-3 w-28 bg-muted rounded" />
+								</div>
+							</div>
+						))}
+					</div>
+				</div>
+			)}
+
+			{showMyCases && !myLoading && myCases.length === 0 && (
+				<div className="w-full mt-4 mb-10">
+					<div className="flex items-center justify-between mb-2">
+						<div />
+						<div className="text-sm text-muted-foreground">My cases</div>
+						<div />
+					</div>
+					<p className="text-sm text-muted-foreground text-center py-6">Save cases to build your docket.</p>
+				</div>
+			)}
+
+			{showMyCases && !myLoading && myCases.length > 0 && (
+				<div className="w-full h-auto mt-4 mb-10">
+					<div className="flex items-center justify-between mb-2">
+						<div />
+						<div className="text-sm text-muted-foreground">My cases</div>
+						<div />
+					</div>
+					<Carousel
+						cases={myCases}
+						renderCard={mc => (
+							<Link
+								href={`/cases/${mc.id}`}
+								className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-xl block h-full"
+							>
+								<Card className="h-[380px] flex flex-col hover:bg-muted transition-colors cursor-pointer shadow-xl border-primary/10">
+									<CardHeader className="pb-2 p-6">
+										<div className="flex items-center justify-between mb-1">
+											<Badge variant="secondary" className="text-[10px] h-4 px-1">{mc.category}</Badge>
+											<div className="flex items-center gap-1">
+												<span className="text-[10px] text-muted-foreground">{mc.year}</span>
+												<button
+													type="button"
+													onClick={e => { e.preventDefault(); e.stopPropagation(); toggleSave(mc.id); }}
+													className={`ml-1 p-0.5 rounded transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${savedIds.has(mc.id) ? 'text-primary' : 'text-muted-foreground'}`}
+												>
+													{savedIds.has(mc.id) ? <BookmarkCheck size={14} /> : <Bookmark size={14} />}
+												</button>
+											</div>
+										</div>
+										<CardTitle className="text-lg font-bold leading-tight line-clamp-2">{mc.name}</CardTitle>
+									</CardHeader>
+									<CardContent className="flex-1 p-6 pt-0">
+										<p className="text-sm text-muted-foreground line-clamp-4">{mc.summary}</p>
+									</CardContent>
+									<CardFooter className="p-4 pt-0">
+										<span className="text-[12px] text-muted-foreground truncate">{mc.citation}</span>
+										{mc.court_listener_link && (
+											<button onClick={e => { e.preventDefault(); e.stopPropagation(); window.open(mc.court_listener_link!, '_blank', 'noopener,noreferrer'); }} className="ml-2 text-xs text-primary hover:underline cursor-pointer">CourtListener →</button>
 										)}
 									</CardFooter>
 								</Card>

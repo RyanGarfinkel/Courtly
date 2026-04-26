@@ -1,6 +1,7 @@
 import { clSearch } from "@/lib/services/caseService";
 import { Case } from "@/types/case";
 import { getDb } from "@/lib/mongo";
+import { auth0 } from "@/lib/auth0";
 import CasesGrid from "./cases-grid";
 
 interface CasesResponse
@@ -74,6 +75,8 @@ export default async function Dashboard({ searchParams }: { searchParams?: Promi
 	};
 
 	const data = await getCases(query, page, PAGE_SIZE, extras);
+	const session = await auth0.getSession();
+	const userId = session?.user?.sub ?? null;
 
 	return (
 		<main className="flex-1 px-8 py-10">
@@ -86,6 +89,7 @@ export default async function Dashboard({ searchParams }: { searchParams?: Promi
 					totalCount={data.total_count}
 					totalPages={data.total_pages}
 					pageSize={data.page_size}
+					userId={userId}
 				/>
 			</div>
 		</main>

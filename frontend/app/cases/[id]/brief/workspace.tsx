@@ -20,6 +20,7 @@ interface Props
 {
 	initialDraft: string | null;
 	side: "plaintiff" | "defendant";
+	matchId?: string;
 }
 
 interface ToolbarButtonProps
@@ -51,7 +52,7 @@ function ToolbarButton({ onClick, active, children }: ToolbarButtonProps)
 	);
 }
 
-export default function Workspace({ initialDraft, side }: Props)
+export default function Workspace({ initialDraft, side, matchId }: Props)
 {
 	const c = useCase();
 	const [panelOpen, setPanelOpen] = useState(true);
@@ -116,11 +117,13 @@ export default function Workspace({ initialDraft, side }: Props)
 					case_summary: c.summary,
 					brief: editor.getText(),
 					side,
+					...(matchId ? { match_id: matchId } : {}),
 				}),
 			});
 			const data = await res.json();
 			sessionStorage.setItem(`hearing_${data.hearing_id}`, JSON.stringify(data));
-			router.push(`/cases/${c.id}/hearing?hearing_id=${data.hearing_id}&side=${side}`);
+			const matchParam = matchId ? `&match_id=${matchId}` : '';
+			router.push(`/cases/${c.id}/hearing?hearing_id=${data.hearing_id}&side=${side}${matchParam}`);
 		}
 		finally
 		{

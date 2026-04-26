@@ -1,12 +1,13 @@
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { searchOpinions } from "@/lib/courtlistener";
 import { mapCl } from "@/lib/services/caseService";
 import { notFound } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Case } from "@/types/case";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ExternalLink, Scale, Shield } from "lucide-react";
+import ChallengeButton from "./challenge-button";
 import { getDb } from "@/lib/mongo";
 import Link from "next/link";
 import { marked } from "marked";
@@ -115,6 +116,8 @@ export default async function CasePage({ params }: Props)
 								</div>
 							</CardContent>
 						</Card>
+
+						<ChallengeButton caseId={c.id} caseName={c.name} />
 					</div>
 				</div>
 			</div>

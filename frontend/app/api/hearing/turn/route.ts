@@ -1,3 +1,4 @@
+import { getMatch, updateMatch } from '@/lib/services/multiplayerStore';
 import { processTurn } from '@/lib/orchestrators/hearing';
 import { getHearing, updateHearing } from '@/lib/services/hearingStore';
 import { NextRequest, NextResponse } from 'next/server';
@@ -14,6 +15,33 @@ export async function POST(req: NextRequest)
 
 		const [newState, newMessages, ruling] = await processTurn(state, user_response);
 		await updateHearing(newState);
+
+		if(ruling && newState.match_id)
+		{
+			const match = await getMatch(newState.match_id);
+			if(match)
+			{
+				if(match.plaintiff?.hearing_id === hearing_id)
+				{
+					match.plaintiff.ruling = ruling;
+					match.plaintiff.status = 'concluded';
+				}
+				else if(match.defendant?.hearing_id === hearing_id)
+				{
+					match.defendant.ruling = ruling;
+					match.defendant.status = 'concluded';
+				}
+
+				const bothConcluded =
+					match.plaintiff?.status === 'concluded' &&
+					match.defendant?.status === 'concluded';
+
+				if(bothConcluded) match.status = 'concluded';
+
+				await updateMatch(match);
+			}
+		}
+
 		return NextResponse.json({
 			messages: newMessages,
 			phase: newState.phase,

@@ -1,13 +1,13 @@
 'use client';
 
-import { HearingMessage, HearingRuling } from '@/types/hearing';
+import { HearingMessage } from '@/types/hearing';
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCase } from '@/contexts/case';
 import { JUDGES } from './judges';
 import { API_URL } from '@/lib/api';
 import QuestionCard from './question-card';
-import RulingPanel from './ruling-panel';
 import CourtIntro from './court-intro';
 import StressPanel from './stress-panel';
 import HintsPanel from './hints-panel';
@@ -19,20 +19,21 @@ interface Props
 {
 	hearingId: string;
 	side: 'plaintiff' | 'defendant';
+	matchId?: string;
 }
 
 type Panel = 'hints' | 'stress' | 'clerk';
 
 const JUSTICE_IDS = new Set(JUDGES.map(j => j.id));
 
-export default function HearingRoom({ hearingId, side }: Props)
+export default function HearingRoom({ hearingId, side, matchId }: Props)
 {
 	const case_ = useCase();
+	const router = useRouter();
 	const [messages, setMessages] = useState<HearingMessage[]>([]);
 	const [phase, setPhase] = useState('interrogation_user');
 	const [turn, setTurn] = useState(1);
 	const [totalTurns, setTotalTurns] = useState(4);
-	const [ruling, setRuling] = useState<HearingRuling | null>(null);
 	const [loading, setLoading] = useState(false);
 	const [initialized, setInitialized] = useState(false);
 	const [courtCalled, setCourtCalled] = useState(false);
@@ -91,7 +92,6 @@ export default function HearingRoom({ hearingId, side }: Props)
 
 			setPhase(data.phase);
 			setTurn(data.turn ?? turn);
-			if(data.ruling) setRuling(data.ruling);
 
 			sessionStorage.setItem(`hearing_${hearingId}`, JSON.stringify({
 				messages: [...messages, ...data.messages],
@@ -100,6 +100,14 @@ export default function HearingRoom({ hearingId, side }: Props)
 				total_turns: totalTurns,
 				ruling: data.ruling
 			}));
+
+			if(data.ruling)
+			{
+				const dest = matchId
+					? `/match/${matchId}/results`
+					: `/cases/${case_.id}/hearing/results?hearing_id=${hearingId}&side=${side}`;
+				router.push(dest);
+			}
 		}
 		finally
 		{
@@ -146,12 +154,6 @@ export default function HearingRoom({ hearingId, side }: Props)
 	return (
 		<div className="flex flex-row h-full w-full overflow-hidden">
 			<div className="flex-1 flex flex-col min-w-0 relative">
-				{ruling && (
-					<div className="absolute inset-0 z-30 bg-background overflow-y-auto">
-						<RulingPanel ruling={ruling} side={side} />
-					</div>
-				)}
-
 				<BenchArc activeSpeakerId={activeSpeakerId} spokenIds={spokenIds} />
 
 				<div className="flex-1 flex flex-col items-center justify-center px-8 py-4 gap-6 overflow-hidden">
