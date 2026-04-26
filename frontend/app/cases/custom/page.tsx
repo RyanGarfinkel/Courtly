@@ -5,9 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { useRouter } from "next/navigation";
+import { API_URL } from "@/lib/api";
 import { useState } from "react";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
 export default function CustomCasePage()
 {

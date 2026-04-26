@@ -1,33 +1,19 @@
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
+import { getLatestDraft } from "@/lib/services/caseMemory";
 import { notFound } from "next/navigation";
 import { CaseProvider } from "@/contexts/case";
 import { Badge } from "@/components/ui/badge";
 import { Case } from "@/types/case";
+import { getDb } from "@/lib/mongo";
 import Workspace from "./workspace";
-
-const BACKEND = process.env.API_URL ?? "http://localhost:8000";
 
 async function getCase(id: string): Promise<Case | null>
 {
 	try
 	{
-		const res = await fetch(`${BACKEND}/cases/${id}`, { cache: "no-store" });
-		if(!res.ok) return null;
-		return await res.json();
-	}
-	catch
-	{
-		return null;
-	}
-}
-
-async function getExistingDraft(caseId: string): Promise<string | null>
-{
-	try
-	{
-		const res = await fetch(`${BACKEND}/brief/load-draft?case_id=${encodeURIComponent(caseId)}`, { cache: "no-store" });
-		if(!res.ok) return null;
-		return (await res.json()).draft ?? null;
+		const db = await getDb();
+		const doc = await db.collection('cases').findOne({ id }, { projection: { _id: 0 } });
+		return doc ? doc as unknown as Case : null;
 	}
 	catch
 	{
@@ -46,7 +32,7 @@ export default async function BriefPage({ params, searchParams }: Props)
 {
 	const [{ id }, sp] = await Promise.all([params, searchParams ?? Promise.resolve({} as { side?: string })]);
 	const side: Side = sp.side === "defendant" ? "defendant" : "plaintiff";
-	const [c, initialDraft] = await Promise.all([getCase(id), getExistingDraft(id)]);
+	const [c, initialDraft] = await Promise.all([getCase(id), getLatestDraft(id)]);
 	if(!c) notFound();
 
 	return (

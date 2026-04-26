@@ -3,9 +3,8 @@
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useCase } from "@/contexts/case";
+import { API_URL } from "@/lib/api";
 import { useState } from "react";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
 export default function ArgumentForm()
 {

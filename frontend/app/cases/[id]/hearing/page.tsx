@@ -1,18 +1,17 @@
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import { notFound } from 'next/navigation';
 import { CaseProvider } from '@/contexts/case';
+import { getDb } from '@/lib/mongo';
 import HearingRoom from './hearing-room';
 import { Case } from '@/types/case';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000';
 
 async function getCase(id: string): Promise<Case | null>
 {
 	try
 	{
-		const res = await fetch(`${API_URL}/cases/${id}`, { cache: 'no-store' });
-		if(!res.ok) return null;
-		return await res.json();
+		const db = await getDb();
+		const doc = await db.collection('cases').findOne({ id }, { projection: { _id: 0 } });
+		return doc ? doc as unknown as Case : null;
 	}
 	catch
 	{

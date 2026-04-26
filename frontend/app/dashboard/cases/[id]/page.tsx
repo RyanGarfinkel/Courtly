@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Case } from "@/types/case";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { getDb } from "@/lib/mongo";
 import Link from "next/link";
 import { ExternalLink, Scale, Shield } from "lucide-react";
 
@@ -11,9 +12,9 @@ async function getCase(id: string): Promise<Case | null>
 {
 	try
 	{
-		const res = await fetch(`${process.env.API_URL ?? "http://localhost:8000"}/cases/${id}`, { next: { revalidate: 3600 } });
-		if(!res.ok) return null;
-		return await res.json();
+		const db = await getDb();
+		const doc = await db.collection('cases').findOne({ id }, { projection: { _id: 0 } });
+		return doc ? doc as unknown as Case : null;
 	}
 	catch
 	{

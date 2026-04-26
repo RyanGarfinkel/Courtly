@@ -1,20 +1,35 @@
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
+import { searchOpinions } from "@/lib/courtlistener";
+import { mapCl } from "@/lib/services/caseService";
 import { notFound } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Case } from "@/types/case";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import Link from "next/link";
 import { ExternalLink, Scale, Shield } from "lucide-react";
+import { getDb } from "@/lib/mongo";
+import Link from "next/link";
 import { marked } from "marked";
 
 async function getCase(id: string): Promise<Case | null>
 {
 	try
 	{
-		const res = await fetch(`${process.env.API_URL ?? "http://localhost:8000"}/cases/${id}`, { next: { revalidate: 3600 } });
-		if(!res.ok) return null;
-		return await res.json();
+		const db = await getDb();
+		const cached = await db.collection('cases').findOne({ id }, { projection: { _id: 0 } });
+		if(cached) return cached as unknown as Case;
+
+		const results = await searchOpinions(id.replace(/-/g, ' '), { limit: 1 });
+		if(results.length)
+		{
+			const mapped = await mapCl(results[0]);
+			if(mapped)
+			{
+				await db.collection('cases').replaceOne({ id: mapped.id }, mapped, { upsert: true });
+				return mapped as unknown as Case;
+			}
+		}
+		return null;
 	}
 	catch
 	{

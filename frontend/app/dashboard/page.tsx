@@ -1,4 +1,6 @@
+import { clSearch } from "@/lib/services/caseService";
 import { Case } from "@/types/case";
+import { getDb } from "@/lib/mongo";
 import CasesGrid from "./cases-grid";
 
 interface CasesResponse
@@ -13,33 +15,30 @@ interface CasesResponse
 
 async function getCases(query: string, page: number, limit: number, extra?: Record<string, string | undefined>): Promise<CasesResponse>
 {
-	const url = new URL(`${process.env.API_URL ?? "http://localhost:8000"}/cases`);
+	const empty = { cases: [], query, page, page_size: limit, total_count: 0, total_pages: 0 };
+	const searchQuery = query || extra?.name || extra?.keyword || '';
 
-	if(query) url.searchParams.set("q", query);
-	url.searchParams.set("page", String(page));
-	url.searchParams.set("limit", String(limit));
+	if(!searchQuery && !extra?.category && !extra?.year_from && !extra?.year_to)
+		return empty;
 
-	if(extra)
+	try
 	{
-		Object.entries(extra).forEach(([k, v]) => {
-			if(v) url.searchParams.set(k, v);
-		});
-	}
+		const db = await getDb();
+		const mongoResults = (await db.collection('cases')
+			.find({ name: { $regex: searchQuery, $options: 'i' } }, { projection: { _id: 0 } })
+			.limit(limit)
+			.toArray()) as unknown as Case[];
 
-	const res = await fetch(url.toString(), { cache: "no-store" });
-	if(!res.ok)
+		if(mongoResults.length)
+			return { cases: mongoResults, query: searchQuery, page, page_size: limit, total_count: mongoResults.length, total_pages: 1 };
+
+		const cases = await clSearch(searchQuery, limit);
+		return { cases: cases as unknown as Case[], query: searchQuery, page, page_size: limit, total_count: cases.length, total_pages: cases.length ? 1 : 0 };
+	}
+	catch
 	{
-		return {
-			cases: [],
-			query,
-			page,
-			page_size: limit,
-			total_count: 0,
-			total_pages: 0,
-		};
+		return empty;
 	}
-
-	return res.json();
 }
 
 type SearchParams = {

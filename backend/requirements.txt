@@ -1,9 +1,0 @@
-fastapi
-uvicorn[standard]
-pydantic
-google-genai
-python-dotenv
-python-jose[cryptography]
-courtlistener-api-client
-pymongo[srv]
-requests
