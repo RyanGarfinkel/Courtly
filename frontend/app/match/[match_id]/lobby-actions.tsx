@@ -25,6 +25,7 @@ function statusLabel(status: MultiplayerMatch['status'])
 {
 	if(status === 'waiting') return 'Waiting for opponent';
 	if(status === 'active') return 'In progress';
+	if(status === 'cancelled') return 'Cancelled';
 	return 'Concluded';
 }
 
@@ -32,6 +33,7 @@ export default function LobbyActions({ match, userId }: Props)
 {
 	const router = useRouter();
 	const [joining, setJoining] = useState(false);
+	const [cancelling, setCancelling] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const [pollingActive, setPollingActive] = useState(match.status === 'waiting');
 
@@ -80,10 +82,61 @@ export default function LobbyActions({ match, userId }: Props)
 		}
 	}
 
+	async function handleCancel()
+	{
+		setCancelling(true);
+		setError(null);
+
+		try
+		{
+			const res = await fetch(`${API_URL}/multiplayer/${match.match_id}`, {
+				method: 'DELETE',
+			});
+
+			if(!res.ok)
+			{
+				const body = await res.json().catch(() => ({}));
+				throw new Error(body.error ?? 'Failed to cancel match');
+			}
+
+			router.push('/dashboard');
+		}
+		catch(err)
+		{
+			setError(err instanceof Error ? err.message : 'Something went wrong');
+			setCancelling(false);
+		}
+	}
+
 	const isPlaintiff = userId && match.plaintiff?.user_id === userId;
 	const isDefendant = userId && match.defendant?.user_id === userId;
 	const isParticipant = isPlaintiff || isDefendant;
 	const userSide = isPlaintiff ? 'plaintiff' : isDefendant ? 'defendant' : null;
+
+	const canCancel =
+		isParticipant &&
+		match.status !== 'concluded' &&
+		match.status !== 'cancelled';
+
+	if(match.status === 'cancelled')
+	{
+		return (
+			<div className="flex flex-col gap-4">
+				<Badge variant="outline" className="self-start px-3 py-1 text-xs font-medium">
+					Cancelled
+				</Badge>
+				<p className="text-sm text-muted-foreground">This match was cancelled.</p>
+				<Button
+					asChild
+					variant="outline"
+					size="sm"
+					className="self-start focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+				>
+					<a href="/dashboard">Back to Dashboard</a>
+				</Button>
+			</div>
+		);
+	}
 
 	return (
 		<div className="flex flex-col gap-4">
@@ -98,7 +151,22 @@ export default function LobbyActions({ match, userId }: Props)
 				<p className="text-sm text-destructive">{error}</p>
 			)}
 
-			{match.status === 'waiting' && !isParticipant && (
+			{match.status === 'waiting' && !isParticipant && !userId && (
+				<div className="flex flex-col gap-3">
+					<p className="text-sm text-muted-foreground">
+						Sign in to join this match.
+					</p>
+					<Button
+						asChild
+						size="lg"
+						className="w-full h-12 font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+					>
+						<a href={`/auth/login?returnTo=/match/${match.match_id}`}>Sign in to join</a>
+					</Button>
+				</div>
+			)}
+
+			{match.status === 'waiting' && !isParticipant && userId && (
 				<div className="flex flex-col gap-3">
 					<p className="text-sm text-muted-foreground">
 						Join as the opposing side to begin the match.
@@ -178,6 +246,20 @@ export default function LobbyActions({ match, userId }: Props)
 						View combined results
 					</a>
 				</Button>
+			)}
+
+			{canCancel && (
+				<div className="pt-1">
+					<Button
+						variant="ghost"
+						size="sm"
+						disabled={cancelling}
+						onClick={handleCancel}
+						className="text-muted-foreground hover:text-destructive transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+					>
+						{cancelling ? 'Cancelling...' : 'Cancel match'}
+					</Button>
+				</div>
 			)}
 		</div>
 	);

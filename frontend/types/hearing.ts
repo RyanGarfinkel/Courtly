@@ -44,6 +44,16 @@ export interface HearingRuling
 	swing_justices: string[];
 }
 
+export interface CombinedRuling
+{
+	winner: 'plaintiff' | 'defendant';
+	vote_plaintiff: number;
+	vote_defendant: number;
+	majority_opinion: JudgeVote;
+	concurrences: JudgeVote[];
+	dissents: JudgeVote[];
+}
+
 export interface HearingState
 {
 	hearing_id: string;

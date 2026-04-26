@@ -1,9 +1,9 @@
 import { getMatch, updateMatch } from '@/lib/services/multiplayerStore';
-import { processTurn } from '@/lib/orchestrators/hearing';
+import { processTurn, runCombinedDeliberation } from '@/lib/orchestrators/hearing';
 import { getHearing, updateHearing } from '@/lib/services/hearingStore';
 import { NextRequest, NextResponse } from 'next/server';
 
-export const maxDuration = 60;
+export const maxDuration = 120;
 
 export async function POST(req: NextRequest)
 {
@@ -36,7 +36,28 @@ export async function POST(req: NextRequest)
 					match.plaintiff?.status === 'concluded' &&
 					match.defendant?.status === 'concluded';
 
-				if(bothConcluded) match.status = 'concluded';
+				if(bothConcluded)
+				{
+					try
+					{
+						const plaintiffHearingId = match.plaintiff!.hearing_id!;
+						const defendantHearingId = match.defendant!.hearing_id!;
+						const isPlaintiff = match.plaintiff?.hearing_id === hearing_id;
+						const otherHearingId = isPlaintiff ? defendantHearingId : plaintiffHearingId;
+						const otherState = await getHearing(otherHearingId);
+
+						if(otherState)
+						{
+							const plaintiffState = isPlaintiff ? newState : otherState;
+							const defendantState = isPlaintiff ? otherState : newState;
+							const combinedRuling = await runCombinedDeliberation(plaintiffState, defendantState);
+							match.combined_ruling = combinedRuling;
+						}
+					}
+					catch {}
+
+					match.status = 'concluded';
+				}
 
 				await updateMatch(match);
 			}

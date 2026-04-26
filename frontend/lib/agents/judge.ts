@@ -175,3 +175,72 @@ Return only valid JSON.`;
 		};
 	}
 }
+
+export async function deliberateCombined(
+	judge: JudgeConfig,
+	caseName: string,
+	plaintiffBrief: string,
+	plaintiffMessages: HearingMessage[],
+	defendantBrief: string,
+	defendantMessages: HearingMessage[]
+): Promise<JudgeVote>
+{
+	const filterOral = (msgs: HearingMessage[]) =>
+		msgs.filter(m => m.type === 'question' || m.speaker_id === 'user');
+
+	const plaintiffOral = formatHistory(filterOral(plaintiffMessages));
+	const defendantOral = formatHistory(filterOral(defendantMessages));
+
+	const prompt = `${judge.system_prompt}
+
+You have heard oral arguments from both sides in ${caseName}.
+
+PLAINTIFF'S BRIEF:
+${plaintiffBrief}
+
+PLAINTIFF'S ORAL ARGUMENT:
+${plaintiffOral}
+
+DEFENDANT'S BRIEF:
+${defendantBrief}
+
+DEFENDANT'S ORAL ARGUMENT:
+${defendantOral}
+
+Having heard both sides, vote for whichever was more legally persuasive given your judicial philosophy.
+
+Respond in this exact JSON format:
+{
+  "vote": "plaintiff" or "defendant",
+  "opinion": "2-3 sentence opinion in your judicial voice explaining your reasoning"
+}
+
+Return only valid JSON.`;
+
+	let raw = (await generateText(prompt)).trim();
+
+	try
+	{
+		if(raw.startsWith('```'))
+		{
+			const parts = raw.split('```');
+			raw = parts[1] ?? '';
+			if(raw.startsWith('json')) raw = raw.slice(4);
+		}
+		const data = JSON.parse(raw.trim());
+		let vote: string = data.vote ?? 'defendant';
+		if(vote !== 'plaintiff' && vote !== 'defendant') vote = 'defendant';
+		const opinion: string = data.opinion ?? 'The Court has considered the arguments presented.';
+		return { judge_id: judge.id, judge_name: judge.name, vote, opinion_type: '', opinion };
+	}
+	catch
+	{
+		return {
+			judge_id: judge.id,
+			judge_name: judge.name,
+			vote: 'defendant',
+			opinion_type: '',
+			opinion: 'The Court has considered the arguments presented and reached its conclusion.',
+		};
+	}
+}

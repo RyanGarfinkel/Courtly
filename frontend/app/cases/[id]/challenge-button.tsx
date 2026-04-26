@@ -2,8 +2,9 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Shield, Scale, Users, Check } from "lucide-react";
+import { Shield, Scale, Users } from "lucide-react";
 import { API_URL } from "@/lib/api";
 
 interface Props
@@ -12,10 +13,11 @@ interface Props
 	caseName: string;
 }
 
-type Step = 'idle' | 'picking' | 'loading' | 'copied' | 'error';
+type Step = 'idle' | 'picking' | 'loading' | 'error';
 
 export default function ChallengeButton({ caseId, caseName }: Props)
 {
+	const router = useRouter();
 	const [step, setStep] = useState<Step>('idle');
 	const [error, setError] = useState<string | null>(null);
 	const cardRef = useRef<HTMLDivElement>(null);
@@ -55,10 +57,8 @@ export default function ChallengeButton({ caseId, caseName }: Props)
 
 			const { match_id } = await res.json();
 			const link = `${window.location.origin}/match/${match_id}`;
-			await navigator.clipboard.writeText(link);
-			setStep('copied');
-
-			setTimeout(() => setStep('idle'), 3000);
+			await navigator.clipboard.writeText(link).catch(() => {});
+			router.push(`/match/${match_id}`);
 		}
 		catch(err)
 		{
@@ -113,13 +113,6 @@ export default function ChallengeButton({ caseId, caseName }: Props)
 				{step === 'loading' && (
 					<div className="flex items-center justify-center h-9">
 						<div className="w-4 h-4 border-2 border-muted-foreground/30 border-t-foreground rounded-full animate-spin" />
-					</div>
-				)}
-
-				{step === 'copied' && (
-					<div className="flex items-center gap-2 justify-center py-1.5 text-sm text-muted-foreground motion-safe:animate-in motion-safe:fade-in motion-safe:duration-200">
-						<Check className="w-4 h-4 text-green-500" />
-						<span>Link copied — share it with your opponent</span>
 					</div>
 				)}
 

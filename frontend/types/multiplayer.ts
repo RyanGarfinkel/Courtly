@@ -1,4 +1,4 @@
-import { HearingRuling } from './hearing';
+import { HearingRuling, CombinedRuling } from './hearing';
 
 export interface MatchPlayer
 {
@@ -14,8 +14,9 @@ export interface MultiplayerMatch
 	match_id: string;
 	case_id: string;
 	case_name: string;
-	status: 'waiting' | 'active' | 'concluded';
+	status: 'waiting' | 'active' | 'concluded' | 'cancelled';
 	created_at: string;
 	plaintiff: MatchPlayer | null;
 	defendant: MatchPlayer | null;
+	combined_ruling?: CombinedRuling;
 }

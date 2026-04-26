@@ -2,13 +2,13 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MultiplayerMatch, MatchPlayer } from "@/types/multiplayer";
-import { HearingState, HearingMessage, JudgeVote } from "@/types/hearing";
+import { HearingState, HearingMessage, JudgeVote, CombinedRuling } from "@/types/hearing";
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { RefreshCw, Scale, Shield } from "lucide-react";
+import { Scale, Shield } from "lucide-react";
 import { JUDGE_MAP } from "@/app/cases/[id]/hearing/judges";
 import { cn } from "@/lib/utils";
 import { API_URL } from "@/lib/api";
@@ -39,19 +39,21 @@ function ScoreBar({ label, value }: { label: string; value: number })
 	);
 }
 
-function OpinionBlock({ vote }: { vote: JudgeVote })
+function JudgeOpinionCard({ vote }: { vote: JudgeVote })
 {
 	const judge = JUDGE_MAP[vote.judge_id];
-	const label =
+	const opinionLabel =
 		vote.opinion_type === 'majority' ? 'Majority' :
 		vote.opinion_type === 'concurrence' ? 'Concurrence' : 'Dissent';
+	const voteLabel = vote.vote === 'plaintiff' ? 'For Plaintiff' : 'For Defendant';
 
 	return (
 		<div className="flex flex-col gap-1 py-2 border-b border-border last:border-0">
-			<div className="flex items-center gap-2">
+			<div className="flex items-center gap-2 flex-wrap">
 				<span className="text-xs font-medium">{vote.judge_name}</span>
 				{judge && <span className="text-[10px] text-muted-foreground">{judge.philosophy}</span>}
-				<Badge variant="outline" className="text-[9px] ml-auto shrink-0">{label}</Badge>
+				<Badge variant="outline" className="text-[9px] ml-auto shrink-0">{opinionLabel}</Badge>
+				<span className="text-[10px] text-muted-foreground shrink-0">{voteLabel}</span>
 			</div>
 			<p className="text-[11px] text-muted-foreground leading-relaxed italic">"{vote.opinion}"</p>
 		</div>
@@ -88,6 +90,40 @@ function TranscriptBlock({ messages }: { messages: HearingMessage[] })
 	);
 }
 
+function CombinedVerdictSection({ ruling }: { ruling: CombinedRuling })
+{
+	const winnerLabel = ruling.winner === 'plaintiff' ? 'PLAINTIFF WINS' : 'DEFENDANT WINS';
+	const voteStr = `${ruling.vote_plaintiff} – ${ruling.vote_defendant}`;
+	const rulesFor = ruling.winner === 'plaintiff' ? 'plaintiff' : 'defendant';
+
+	const allOpinions = [ruling.majority_opinion, ...ruling.concurrences, ...ruling.dissents];
+
+	return (
+		<div className="flex flex-col gap-6">
+			<div className="flex flex-col gap-2">
+				<p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+					The Court's Verdict
+				</p>
+				<h2 className="text-4xl font-black tracking-tight">{winnerLabel}</h2>
+				<p className="text-sm text-muted-foreground">
+					{voteStr} · Court rules for the {rulesFor}
+				</p>
+			</div>
+
+			<Card>
+				<CardHeader className="pb-1 pt-3 px-3">
+					<CardTitle className="text-xs">Judicial Opinions</CardTitle>
+				</CardHeader>
+				<CardContent className="px-3 pb-2">
+					{allOpinions.map(v => (
+						<JudgeOpinionCard key={v.judge_id} vote={v} />
+					))}
+				</CardContent>
+			</Card>
+		</div>
+	);
+}
+
 function PlayerColumn({ player, hearing, side }: { player: MatchPlayer; hearing: HearingState | null; side: Side })
 {
 	const icon = side === 'plaintiff' ? <Scale className="w-3.5 h-3.5" /> : <Shield className="w-3.5 h-3.5" />;
@@ -110,11 +146,6 @@ function PlayerColumn({ player, hearing, side }: { player: MatchPlayer; hearing:
 	}
 
 	const ruling = player.ruling;
-	const won = ruling?.result === 'affirmed';
-	const voteStr = ruling ? `${ruling.vote_for}–${ruling.vote_against}` : null;
-	const allOpinions = ruling
-		? [ruling.majority_opinion, ...ruling.concurrences, ...ruling.dissents]
-		: [];
 
 	return (
 		<div className="flex flex-col gap-4">
@@ -123,21 +154,7 @@ function PlayerColumn({ player, hearing, side }: { player: MatchPlayer; hearing:
 				<span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{label}</span>
 			</div>
 
-			<div className="flex items-baseline gap-3">
-				<p className="text-sm font-medium">{player.user_name}</p>
-				{voteStr && (
-					<span className="text-xs text-muted-foreground tabular-nums">{voteStr}</span>
-				)}
-			</div>
-
-			{ruling && (
-				<div className={cn(
-					'text-2xl font-black tracking-tight',
-					won ? 'text-foreground' : 'text-muted-foreground/50'
-				)}>
-					{ruling.result.toUpperCase()}
-				</div>
-			)}
+			<p className="text-sm font-medium">{player.user_name}</p>
 
 			{ruling && (
 				<Card>
@@ -151,19 +168,6 @@ function PlayerColumn({ player, hearing, side }: { player: MatchPlayer; hearing:
 						<div className="border-t border-border pt-2">
 							<ScoreBar label="Overall" value={ruling.scores.overall} />
 						</div>
-					</CardContent>
-				</Card>
-			)}
-
-			{allOpinions.length > 0 && (
-				<Card>
-					<CardHeader className="pb-1 pt-3 px-3">
-						<CardTitle className="text-xs">Opinions</CardTitle>
-					</CardHeader>
-					<CardContent className="px-3 pb-2">
-						{allOpinions.map(v => (
-							<OpinionBlock key={v.judge_id} vote={v} />
-						))}
 					</CardContent>
 				</Card>
 			)}
@@ -185,6 +189,8 @@ function ResultsSkeleton()
 	return (
 		<div className="flex flex-col gap-8">
 			<Skeleton className="h-10 w-3/4" />
+			<Skeleton className="h-16 w-1/2" />
+			<Skeleton className="h-48 w-full" />
 			<div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
 				<div className="flex flex-col gap-4">
 					<Skeleton className="h-6 w-24" />
@@ -214,9 +220,24 @@ export default function MatchResultsPage()
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 
-	async function load()
+	const fetchHearing = async (id: string | null): Promise<HearingState | null> =>
 	{
-		setLoading(true);
+		if(!id) return null;
+		try
+		{
+			const res = await fetch(`${API_URL}/hearing/${id}`);
+			if(!res.ok) return null;
+			return await res.json();
+		}
+		catch
+		{
+			return null;
+		}
+	};
+
+	async function load(showLoading = true)
+	{
+		if(showLoading) setLoading(true);
 		setError(null);
 
 		try
@@ -226,35 +247,22 @@ export default function MatchResultsPage()
 			const matchData: MultiplayerMatch = await matchRes.json();
 			setMatch(matchData);
 
-			const fetchHearing = async (id: string | null): Promise<HearingState | null> =>
-			{
-				if(!id) return null;
-				try
-				{
-					const res = await fetch(`${API_URL}/hearing/${id}`);
-					if(!res.ok) return null;
-					return await res.json();
-				}
-				catch
-				{
-					return null;
-				}
-			};
-
 			const [plaintiff, defendant] = await Promise.all([
 				fetchHearing(matchData.plaintiff?.hearing_id ?? null),
 				fetchHearing(matchData.defendant?.hearing_id ?? null),
 			]);
 
 			setHearings({ plaintiff, defendant });
+			return matchData;
 		}
 		catch(err)
 		{
 			setError(err instanceof Error ? err.message : 'Failed to load results');
+			return null;
 		}
 		finally
 		{
-			setLoading(false);
+			if(showLoading) setLoading(false);
 		}
 	}
 
@@ -262,6 +270,19 @@ export default function MatchResultsPage()
 	{
 		load();
 	}, [matchId]);
+
+	useEffect(() =>
+	{
+		if(!match || match.status === 'concluded') return;
+
+		const interval = setInterval(async () =>
+		{
+			const updated = await load(false);
+			if(updated?.status === 'concluded') clearInterval(interval);
+		}, 5000);
+
+		return () => clearInterval(interval);
+	}, [match?.status]);
 
 	if(loading) return (
 		<main className="px-8 py-10">
@@ -280,7 +301,15 @@ export default function MatchResultsPage()
 		</main>
 	);
 
-	const bothConcluded = match.plaintiff?.status === 'concluded' && match.defendant?.status === 'concluded';
+	const bothConcluded =
+		match.plaintiff?.status === 'concluded' &&
+		match.defendant?.status === 'concluded' &&
+		!!match.combined_ruling;
+
+	const isDeliberating =
+		match.plaintiff?.status === 'concluded' &&
+		match.defendant?.status === 'concluded' &&
+		!match.combined_ruling;
 
 	return (
 		<main className="px-8 py-10">
@@ -292,19 +321,22 @@ export default function MatchResultsPage()
 					<h1 className="text-3xl font-bold tracking-tight">{match.case_name}</h1>
 				</div>
 
-				{!bothConcluded && (
-					<div className="flex items-center gap-3">
-						<p className="text-sm text-muted-foreground">Waiting for all players to finish.</p>
-						<Button
-							variant="outline"
-							size="sm"
-							className="flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-							onClick={load}
-						>
-							<RefreshCw className="w-3.5 h-3.5" />
-							Refresh
-						</Button>
+				{!bothConcluded && !isDeliberating && (
+					<div className="flex items-center gap-2 text-sm text-muted-foreground">
+						<div className="w-3.5 h-3.5 border-2 border-muted-foreground/30 border-t-muted-foreground rounded-full animate-spin shrink-0" />
+						<span>Waiting for your opponent to finish — checking automatically...</span>
 					</div>
+				)}
+
+				{isDeliberating && (
+					<div className="flex items-center gap-2 text-sm text-muted-foreground">
+						<div className="w-3.5 h-3.5 border-2 border-muted-foreground/30 border-t-muted-foreground rounded-full animate-spin shrink-0" />
+						<span>Both arguments submitted — the court is deliberating...</span>
+					</div>
+				)}
+
+				{bothConcluded && match.combined_ruling && (
+					<CombinedVerdictSection ruling={match.combined_ruling} />
 				)}
 
 				<div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">

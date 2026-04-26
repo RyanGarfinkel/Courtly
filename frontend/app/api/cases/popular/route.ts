@@ -13,7 +13,11 @@ export async function GET(request: NextRequest)
 		await seedIfEmpty();
 		const db = await getDb();
 		const docs = await db.collection('cases')
-			.aggregate([{ $sample: { size: limit } }, { $project: { _id: 0 } }])
+			.aggregate([
+				{ $match: { created_by: { $exists: false } } },
+				{ $sample: { size: limit } },
+				{ $project: { _id: 0 } },
+			])
 			.toArray();
 		return NextResponse.json({ cases: docs });
 	}
