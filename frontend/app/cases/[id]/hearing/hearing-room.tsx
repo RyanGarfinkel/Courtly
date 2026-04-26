@@ -1,16 +1,19 @@
 'use client';
 
 import { HearingMessage, HearingRuling } from '@/types/hearing';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Badge } from '@/components/ui/badge';
 import { useCase } from '@/contexts/case';
 import { JUDGES } from './judges';
 import { API_URL } from '@/lib/api';
-import ActionPanel from './action-panel';
-import BenchHeader from './bench-header';
+import QuestionCard from './question-card';
+import RulingPanel from './ruling-panel';
 import CourtIntro from './court-intro';
-import Bubble from './bubble';
+import StressPanel from './stress-panel';
+import HintsPanel from './hints-panel';
+import ClerkPanel from './clerk-panel';
+import BenchArc from './bench-arc';
+import Lectern from './lectern';
 
 interface Props
 {
@@ -18,11 +21,7 @@ interface Props
 	side: 'plaintiff' | 'defendant';
 }
 
-const PHASE_LABELS: Record<string, string> = {
-	interrogation_user: 'Examination',
-	rebuttal: 'Rebuttal',
-	concluded: 'Deliberation Complete',
-};
+type Panel = 'hints' | 'stress' | 'clerk';
 
 const JUSTICE_IDS = new Set(JUDGES.map(j => j.id));
 
@@ -37,7 +36,8 @@ export default function HearingRoom({ hearingId, side }: Props)
 	const [loading, setLoading] = useState(false);
 	const [initialized, setInitialized] = useState(false);
 	const [courtCalled, setCourtCalled] = useState(false);
-	const bottomRef = useRef<HTMLDivElement>(null);
+	const [draft, setDraft] = useState('');
+	const [openPanel, setOpenPanel] = useState<Panel | null>(null);
 
 	useEffect(() =>
 	{
@@ -53,13 +53,13 @@ export default function HearingRoom({ hearingId, side }: Props)
 		setInitialized(true);
 	}, [hearingId]);
 
-	useEffect(() =>
+	async function handleSubmit()
 	{
-		bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-	}, [messages, loading]);
+		if(!draft.trim() || loading) return;
 
-	async function handleSubmit(response: string)
-	{
+		const response = draft.trim();
+		setDraft('');
+
 		const userMsg: HearingMessage = {
 			id: `temp-${Date.now()}`,
 			speaker: 'You',
@@ -83,7 +83,8 @@ export default function HearingRoom({ hearingId, side }: Props)
 
 			const data = await res.json();
 
-			setMessages(prev => {
+			setMessages(prev =>
+			{
 				const filtered = prev.filter(m => !m.id.startsWith('temp-'));
 				return [...filtered, ...data.messages];
 			});
@@ -109,14 +110,10 @@ export default function HearingRoom({ hearingId, side }: Props)
 	if(!initialized)
 	{
 		return (
-			<div className="flex gap-6 flex-1">
-				<div className="flex flex-col flex-1 gap-4">
-					<Skeleton className="h-12 w-full" />
-					<Skeleton className="h-24 w-3/4" />
-					<Skeleton className="h-16 w-1/2 self-end" />
-					<Skeleton className="h-24 w-2/3" />
-				</div>
-				<Skeleton className="w-[440px] h-96 shrink-0" />
+			<div className="flex flex-col gap-4 flex-1 p-8">
+				<Skeleton className="h-56 w-full" />
+				<Skeleton className="h-24 w-3/4 mx-auto" />
+				<Skeleton className="h-36 w-full mt-auto" />
 			</div>
 		);
 	}
@@ -135,66 +132,129 @@ export default function HearingRoom({ hearingId, side }: Props)
 	const activeSpeakerId = lastJusticeMsg?.speaker_id ?? null;
 	const spokenIds = new Set(messages.filter(m => JUSTICE_IDS.has(m.speaker_id)).map(m => m.speaker_id));
 
-	const lastQuestion = [...messages].reverse().find(m => (JUSTICE_IDS.has(m.speaker_id) || m.speaker_id === 'court') && m.type === 'question');
-	const pendingQuestion = lastQuestion ? { id: lastQuestion.id, speaker: lastQuestion.speaker, content: lastQuestion.content } : null;
+	const lastQuestion = [...messages].reverse().find(
+		m => (JUSTICE_IDS.has(m.speaker_id) || m.speaker_id === 'court') && m.type === 'question'
+	);
+	const pendingQuestion = lastQuestion
+		? { id: lastQuestion.id, speaker: lastQuestion.speaker, content: lastQuestion.content }
+		: null;
 
-	const questionsLeft = totalTurns - (turn - 1);
-	const progressPct = phase === 'interrogation_user' ? ((turn - 1) / totalTurns) * 100 : 100;
+	const currentSpeaker = lastQuestion?.speaker ?? null;
+	const currentSpeakerId = lastQuestion?.speaker_id ?? null;
+	const currentQuestionContent = lastQuestion?.content ?? null;
 
 	return (
-		<div className="flex gap-8 flex-1 min-h-0 h-full overflow-hidden">
-			<div className="flex flex-col flex-1 gap-4 min-w-0 h-full min-h-0">
-				<div className="flex items-center justify-between shrink-0">
-					<div className="flex items-center gap-3">
-						<Badge variant="secondary" className="font-semibold px-3">{PHASE_LABELS[phase] ?? phase}</Badge>
-						<Badge variant="outline" className="px-3">{side === 'plaintiff' ? 'Petitioner' : 'Respondent'}</Badge>
-					</div>
-					{phase === 'interrogation_user' && (
-						<span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
-							{questionsLeft === 1 ? '1 question remaining' : `${questionsLeft} questions remaining`}
-						</span>
-					)}
-				</div>
-
-				<BenchHeader activeSpeakerId={activeSpeakerId} spokenIds={spokenIds} />
-
-				{phase === 'interrogation_user' && (
-					<div className="h-1 bg-muted rounded-full overflow-hidden shrink-0">
-						<div
-							className="h-full bg-primary/40 rounded-full transition-all duration-700"
-							style={{ width: `${progressPct}%` }}
-						/>
+		<div className="flex flex-row h-full w-full overflow-hidden">
+			<div className="flex-1 flex flex-col min-w-0 relative">
+				{ruling && (
+					<div className="absolute inset-0 z-30 bg-background overflow-y-auto">
+						<RulingPanel ruling={ruling} side={side} />
 					</div>
 				)}
 
-				<div className="flex-1 flex flex-col gap-4 overflow-y-auto min-h-0 pr-4 -mr-4 scroll-smooth">
-					<div className="flex flex-col gap-4 py-2">
-						{messages.map(m => (
-							<Bubble key={m.id} message={m} />
-						))}
+				<BenchArc activeSpeakerId={activeSpeakerId} spokenIds={spokenIds} />
 
-						{loading && (
-							<div className="flex flex-col gap-2 self-start max-w-[70%] animate-in fade-in slide-in-from-bottom-2">
-								<Skeleton className="h-4 w-48" />
-								<Skeleton className="h-20 w-full rounded-2xl" />
-							</div>
-						)}
-						<div ref={bottomRef} className="h-4 shrink-0" />
+				<div className="flex-1 flex flex-col items-center justify-center px-8 py-4 gap-6 overflow-hidden">
+					<QuestionCard
+						speaker={currentSpeaker}
+						speakerId={currentSpeakerId}
+						content={currentQuestionContent}
+						loading={loading}
+						phase={phase}
+					/>
+
+					<div className="flex items-end justify-between w-full max-w-2xl">
+						<AttorneyAvatar label={side === 'plaintiff' ? 'Petitioner (You)' : 'Respondent (You)'} />
+						<AttorneyAvatar label={side === 'plaintiff' ? 'Respondent' : 'Petitioner'} dim />
+					</div>
+				</div>
+
+				<div className="shrink-0 py-5 px-8 relative">
+					<div className="max-w-2xl mx-auto">
+						<Lectern
+							draft={draft}
+							onDraftChange={setDraft}
+							onSubmit={handleSubmit}
+							onHint={() => setOpenPanel('hints')}
+							onStressTest={() => setOpenPanel('stress')}
+							loading={loading}
+							phase={phase}
+						/>
+					</div>
+					<div className="absolute right-8 top-0 bottom-0 flex items-center">
+						<ClerkBadge onClick={() => setOpenPanel('clerk')} />
 					</div>
 				</div>
 			</div>
 
-			<div className="w-[420px] shrink-0 border-l border-border pl-8 overflow-y-auto h-full scroll-smooth">
-				<ActionPanel
-					hearingId={hearingId}
-					phase={phase}
-					pendingQuestion={pendingQuestion}
-					onSubmit={handleSubmit}
-					loading={loading}
-					ruling={ruling}
-					side={side}
-				/>
+			<div className={`overflow-hidden transition-all duration-300 ease-in-out border-l border-border shrink-0 ${openPanel ? 'w-80' : 'w-0'}`}>
+				{openPanel === 'hints' && (
+					<HintsPanel
+						open={openPanel === 'hints'}
+						onClose={() => setOpenPanel(null)}
+						hearingId={hearingId}
+					/>
+				)}
+				{openPanel === 'stress' && (
+					<StressPanel
+						onClose={() => setOpenPanel(null)}
+						hearingId={hearingId}
+						pendingQuestion={pendingQuestion}
+						draft={draft}
+					/>
+				)}
+				{openPanel === 'clerk' && (
+					<ClerkPanel
+						onClose={() => setOpenPanel(null)}
+						hearingId={hearingId}
+						pendingQuestion={pendingQuestion}
+						messages={messages}
+					/>
+				)}
 			</div>
+		</div>
+	);
+}
+
+function PersonIcon()
+{
+	return (
+		<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+			<circle cx="12" cy="8" r="4" />
+			<path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
+		</svg>
+	);
+}
+
+function AttorneyAvatar({ label, dim }: { label: string; dim?: boolean })
+{
+	return (
+		<div className="flex flex-col items-center gap-1.5">
+			<div className={`w-10 h-10 rounded-full border border-border flex items-center justify-center transition-opacity ${dim ? 'bg-muted/30 text-muted-foreground/40 opacity-50' : 'bg-muted/60 text-muted-foreground'}`}>
+				<PersonIcon />
+			</div>
+			<span className="text-[10px] text-muted-foreground whitespace-nowrap">{label}</span>
+		</div>
+	);
+}
+
+function ClerkBadge({ onClick }: { onClick: () => void })
+{
+	return (
+		<div className="shrink-0 flex flex-col items-center gap-2">
+			<div className="w-9 h-9 rounded-full bg-muted/60 border border-border flex items-center justify-center text-muted-foreground">
+				<PersonIcon />
+			</div>
+			<button
+				onClick={onClick}
+				className="flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-border text-[11px] font-medium text-muted-foreground hover:text-foreground hover:border-foreground/40 hover:bg-muted/30 transition-colors"
+				title="Ask the clerk"
+			>
+				<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+					<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+				</svg>
+				Clerk
+			</button>
 		</div>
 	);
 }
