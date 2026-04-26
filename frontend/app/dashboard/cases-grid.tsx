@@ -77,45 +77,29 @@ export default function CasesGrid({ cases: initialCases, page, totalCount, total
 	const [displayedCases, setDisplayedCases] = useState<Case[]>(initialCases);
 	const [searchLoading, setSearchLoading] = useState(false);
 
-	// ensure popularIndex stays in bounds if popularCases changes (3 per page)
-	useEffect(() => {
-		if(popularCases.length === 0) {
-			setPopularIndex(0);
-			return;
-		}
-		const maxIndex = Math.max(0, Math.ceil(popularCases.length / 3) - 1);
-		setPopularIndex((idx) => Math.min(Math.max(0, idx), maxIndex));
-	}, [popularCases]);
-
 	const popularPages = Math.max(1, Math.ceil(popularCases.length / 3));
+	const maxPopularIndex = Math.max(0, Math.ceil(popularCases.length / 3) - 1);
 
 	// scroll track to page when popularIndex changes
 	useEffect(() => {
 		if(!trackRef.current) return;
 		const track = trackRef.current;
 		const pageWidth = track.clientWidth; // visible width
-		track.scrollTo({ left: popularIndex * (pageWidth + 16), behavior: 'smooth' });
-	}, [popularIndex]);
-
-	// ensure displayedIndex stays in bounds
-	useEffect(() => {
-		if(displayedCases.length === 0) {
-			setDisplayedIndex(0);
-			return;
-		}
-		const maxIndex = Math.max(0, Math.ceil(displayedCases.length / 3) - 1);
-		setDisplayedIndex((idx) => Math.min(Math.max(0, idx), maxIndex));
-	}, [displayedCases]);
+		const clampedIndex = Math.min(Math.max(0, popularIndex), maxPopularIndex);
+		track.scrollTo({ left: clampedIndex * (pageWidth + 16), behavior: 'smooth' });
+	}, [popularIndex, maxPopularIndex]);
 
 	const displayedPages = Math.max(1, Math.ceil(displayedCases.length / 3));
+	const maxDisplayedIndex = Math.max(0, Math.ceil(displayedCases.length / 3) - 1);
 
 	// scroll track to page when displayedIndex changes
 	useEffect(() => {
 		if(!displayedTrackRef.current) return;
 		const track = displayedTrackRef.current;
 		const pageWidth = track.clientWidth;
-		track.scrollTo({ left: displayedIndex * (pageWidth + 16), behavior: 'smooth' });
-	}, [displayedIndex]);
+		const clampedIndex = Math.min(Math.max(0, displayedIndex), maxDisplayedIndex);
+		track.scrollTo({ left: clampedIndex * (pageWidth + 16), behavior: 'smooth' });
+	}, [displayedIndex, maxDisplayedIndex]);
 
 	// Animation visibility: only show if no search inputs AND no results (initial or external)
 	const isSearching = Boolean(searchQuery || yearFrom || yearTo || keyword);
@@ -343,8 +327,7 @@ export default function CasesGrid({ cases: initialCases, page, totalCount, total
 							onKeyDown={(e) => {
 								if(e.key === 'ArrowLeft') setDisplayedIndex((p) => Math.max(0, p - 1));
 								if(e.key === 'ArrowRight') {
-									const maxIdx = Math.max(0, Math.ceil(displayedCases.length / 3) - 1);
-									setDisplayedIndex((p) => Math.min(maxIdx, p + 1));
+									setDisplayedIndex((p) => Math.min(maxDisplayedIndex, p + 1));
 								}
 							}}
 							className="outline-none"
@@ -395,10 +378,7 @@ export default function CasesGrid({ cases: initialCases, page, totalCount, total
 
 								<div className="absolute right-0 top-1/2 -translate-y-1/2 z-50">
 									<button
-										onClick={() => {
-											const maxIdx = Math.max(0, Math.ceil(displayedCases.length / 3) - 1);
-											setDisplayedIndex((p) => Math.min(maxIdx, p + 1));
-										}}
+										onClick={() => setDisplayedIndex((p) => Math.min(maxDisplayedIndex, p + 1))}
 										aria-label="Next cases"
 										disabled={displayedIndex >= displayedPages - 1}
 										className="flex items-center justify-center w-10 h-10 rounded-full bg-black shadow-lg border border-border text-white disabled:opacity-0 disabled:cursor-not-allowed transition-opacity hover:bg-black"
@@ -415,7 +395,7 @@ export default function CasesGrid({ cases: initialCases, page, totalCount, total
 								{Array.from({ length: displayedPages }).map((_, i) => (
 									<button
 										key={i}
-										onClick={() => setDisplayedIndex(i)}
+										onClick={() => setDisplayedIndex(Math.min(i, maxDisplayedIndex))}
 										aria-label={`Go to page ${i + 1}`}
 										className={`w-2 h-2 rounded-full transition-colors ${i === displayedIndex ? 'bg-foreground' : 'bg-border hover:bg-muted-foreground'}`}
 									/>
@@ -476,8 +456,7 @@ export default function CasesGrid({ cases: initialCases, page, totalCount, total
 							onKeyDown={(e) => {
 								if(e.key === 'ArrowLeft') setPopularIndex((p) => Math.max(0, p - 1));
 								if(e.key === 'ArrowRight') {
-									const maxIdx = Math.max(0, Math.ceil(popularCases.length / 3) - 1);
-									setPopularIndex((p) => Math.min(maxIdx, p + 1));
+									setPopularIndex((p) => Math.min(maxPopularIndex, p + 1));
 								}
 							}}
 							className="outline-none"
@@ -528,10 +507,7 @@ export default function CasesGrid({ cases: initialCases, page, totalCount, total
 
 								<div className="absolute right-0 top-1/2 -translate-y-1/2 z-50">
 									<button
-										onClick={() => {
-											const maxIdx = Math.max(0, Math.ceil(popularCases.length / 3) - 1);
-											setPopularIndex((p) => Math.min(maxIdx, p + 1));
-										}}
+										onClick={() => setPopularIndex((p) => Math.min(maxPopularIndex, p + 1))}
 										aria-label="Next popular cases"
 										disabled={popularIndex >= popularPages - 1}
 										className="flex items-center justify-center w-10 h-10 rounded-full bg-black/80 shadow-lg border border-border text-white disabled:opacity-0 disabled:cursor-not-allowed transition-opacity hover:bg-black"
@@ -548,7 +524,7 @@ export default function CasesGrid({ cases: initialCases, page, totalCount, total
 								{Array.from({ length: popularPages }).map((_, i) => (
 									<button
 										key={i}
-										onClick={() => setPopularIndex(i)}
+										onClick={() => setPopularIndex(Math.min(i, maxPopularIndex))}
 										aria-label={`Go to page ${i + 1}`}
 										className={`w-2 h-2 rounded-full transition-colors ${i === popularIndex ? 'bg-foreground' : 'bg-border hover:bg-muted-foreground'}`}
 									/>
