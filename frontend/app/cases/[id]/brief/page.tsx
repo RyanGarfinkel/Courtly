@@ -25,13 +25,14 @@ type Side = "plaintiff" | "defendant";
 
 type Props = {
 	params: Promise<{ id: string }>;
-	searchParams?: Promise<{ side?: string }>;
+	searchParams?: Promise<{ side?: string; match_id?: string }>;
 };
 
 export default async function BriefPage({ params, searchParams }: Props)
 {
-	const [{ id }, sp] = await Promise.all([params, searchParams ?? Promise.resolve({} as { side?: string })]);
+	const [{ id }, sp] = await Promise.all([params, searchParams ?? Promise.resolve({} as { side?: string; match_id?: string })]);
 	const side: Side = sp.side === "defendant" ? "defendant" : "plaintiff";
+	const matchId = sp.match_id;
 	const [c, initialDraft] = await Promise.all([getCase(id), getLatestDraft(id)]);
 	if(!c) notFound();
 
@@ -69,7 +70,7 @@ export default async function BriefPage({ params, searchParams }: Props)
 				</div>
 
 				<CaseProvider case_={c}>
-					<Workspace initialDraft={initialDraft} side={side} />
+					<Workspace initialDraft={initialDraft} side={side} matchId={matchId} />
 				</CaseProvider>
 			</div>
 		</main>

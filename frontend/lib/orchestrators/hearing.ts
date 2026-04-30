@@ -1,6 +1,6 @@
-import { askQuestion, scoreResponse, reactToResponse, deliberate } from '@/lib/agents/judge';
+import { askQuestion, scoreResponse, reactToResponse, deliberate, deliberateCombined } from '@/lib/agents/judge';
 import { argue, respondToQuestion } from '@/lib/agents/opposingCounsel';
-import { HearingState, HearingMessage, HearingRuling, JudgeConfig, JudgeVote } from '@/types/hearing';
+import { HearingState, HearingMessage, HearingRuling, CombinedRuling, JudgeConfig, JudgeVote } from '@/types/hearing';
 import { JUDGES, getJudgeById } from '@/lib/judges';
 import { evaluate } from '@/lib/agents/scorer';
 
@@ -203,4 +203,42 @@ export async function processTurn(
 	}
 
 	return [state, [], null];
+}
+
+export async function runCombinedDeliberation(
+	plaintiffState: HearingState,
+	defendantState: HearingState
+): Promise<CombinedRuling>
+{
+	const votes = await Promise.all(
+		JUDGES.map(j => deliberateCombined(
+			j,
+			plaintiffState.case_name,
+			plaintiffState.brief,
+			plaintiffState.messages,
+			defendantState.brief,
+			defendantState.messages
+		))
+	);
+
+	const plaintiffVotes = votes.filter(v => v.vote === 'plaintiff');
+	const defendantVotes = votes.filter(v => v.vote === 'defendant');
+	const winner: 'plaintiff' | 'defendant' = plaintiffVotes.length >= 5 ? 'plaintiff' : 'defendant';
+
+	const majorityVotes = winner === 'plaintiff' ? plaintiffVotes : defendantVotes;
+	const minorityVotes = winner === 'plaintiff' ? defendantVotes : plaintiffVotes;
+
+	const [majorityAuthor, ...majorityRest] = majorityVotes;
+	majorityAuthor.opinion_type = 'majority';
+	for(const v of majorityRest) v.opinion_type = 'concurrence';
+	for(const v of minorityVotes) v.opinion_type = 'dissent';
+
+	return {
+		winner,
+		vote_plaintiff: plaintiffVotes.length,
+		vote_defendant: defendantVotes.length,
+		majority_opinion: majorityAuthor,
+		concurrences: majorityRest,
+		dissents: minorityVotes,
+	};
 }

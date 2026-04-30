@@ -44,6 +44,16 @@ export interface HearingRuling
 	swing_justices: string[];
 }
 
+export interface CombinedRuling
+{
+	winner: 'plaintiff' | 'defendant';
+	vote_plaintiff: number;
+	vote_defendant: number;
+	majority_opinion: JudgeVote;
+	concurrences: JudgeVote[];
+	dissents: JudgeVote[];
+}
+
 export interface HearingState
 {
 	hearing_id: string;
@@ -58,4 +68,5 @@ export interface HearingState
 	messages: HearingMessage[];
 	disposition_scores: Record<string, number>;
 	questioning_order: string[];
+	match_id?: string;
 }

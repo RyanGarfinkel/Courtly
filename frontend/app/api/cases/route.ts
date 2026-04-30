@@ -1,5 +1,6 @@
 import { seedIfEmpty, clSearch, caseId, mapCl } from '@/lib/services/caseService';
 import { NextRequest, NextResponse } from 'next/server';
+import { auth0 } from '@/lib/auth0';
 import { getDb } from '@/lib/mongo';
 
 export async function GET(request: NextRequest)
@@ -83,6 +84,9 @@ export async function POST(request: NextRequest)
 		if(!name || !summary)
 			return NextResponse.json({ error: 'name and summary are required' }, { status: 400 });
 
+		const session = await auth0.getSession();
+		const userId = session?.user?.sub ?? null;
+
 		const id = caseId(name);
 		const db = await getDb();
 		const existing = await db.collection('cases').findOne({ id }, { projection: { _id: 0 } });
@@ -90,9 +94,11 @@ export async function POST(request: NextRequest)
 		if(existing)
 			return NextResponse.json(existing);
 
-		const newCase = { id, name, summary, category, year, citation };
+		const newCase: Record<string, unknown> = { id, name, summary, category, year, citation };
+		if(userId) newCase.created_by = userId;
+
 		await db.collection('cases').insertOne({ ...newCase });
-		return NextResponse.json(newCase, { status: 201 });
+		return NextResponse.json({ id, name, summary, category, year, citation }, { status: 201 });
 	}
 	catch
 	{

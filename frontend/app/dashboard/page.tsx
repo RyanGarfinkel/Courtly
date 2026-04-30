@@ -1,6 +1,9 @@
 import { clSearch } from "@/lib/services/caseService";
+import { MultiplayerMatch } from "@/types/multiplayer";
 import { Case } from "@/types/case";
 import { getDb } from "@/lib/mongo";
+import { auth0 } from "@/lib/auth0";
+import MatchesSection from "./matches-section";
 import CasesGrid from "./cases-grid";
 
 interface CasesResponse
@@ -41,6 +44,26 @@ async function getCases(query: string, page: number, limit: number, extra?: Reco
 	}
 }
 
+async function getMatches(userId: string): Promise<MultiplayerMatch[]>
+{
+	try
+	{
+		const db = await getDb();
+		return await db.collection('multiplayer_matches')
+			.find(
+				{ $or: [{ 'plaintiff.user_id': userId }, { 'defendant.user_id': userId }] },
+				{ projection: { _id: 0 } }
+			)
+			.sort({ created_at: -1 })
+			.limit(20)
+			.toArray() as unknown as MultiplayerMatch[];
+	}
+	catch
+	{
+		return [];
+	}
+}
+
 type SearchParams = {
 	q?: string;
 	page?: string;
@@ -73,11 +96,20 @@ export default async function Dashboard({ searchParams }: { searchParams?: Promi
 		defendant: params?.defendant,
 	};
 
-	const data = await getCases(query, page, PAGE_SIZE, extras);
+	const session = await auth0.getSession();
+	const userId = session?.user?.sub ?? null;
+
+	const [data, matches] = await Promise.all([
+		getCases(query, page, PAGE_SIZE, extras),
+		userId ? getMatches(userId) : Promise.resolve([]),
+	]);
 
 	return (
 		<main className="flex-1 px-8 py-10">
 			<div className="max-w-5xl mx-auto">
+				{userId && matches.length > 0 && (
+					<MatchesSection matches={matches} userId={userId} />
+				)}
 				<p className="text-muted-foreground mb-6">Select a case to bring before the court.</p>
 				<CasesGrid
 					key={`${data.query}-${data.page}`}
@@ -86,6 +118,7 @@ export default async function Dashboard({ searchParams }: { searchParams?: Promi
 					totalCount={data.total_count}
 					totalPages={data.total_pages}
 					pageSize={data.page_size}
+					userId={userId}
 				/>
 			</div>
 		</main>

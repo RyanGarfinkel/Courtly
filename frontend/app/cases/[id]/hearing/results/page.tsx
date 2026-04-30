@@ -1,8 +1,7 @@
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import { notFound } from 'next/navigation';
-import { CaseProvider } from '@/contexts/case';
+import ResultsContent from './results-content';
 import { getDb } from '@/lib/mongo';
-import HearingRoom from './hearing-room';
 import { Case } from '@/types/case';
 
 async function getCase(id: string): Promise<Case | null>
@@ -21,21 +20,21 @@ async function getCase(id: string): Promise<Case | null>
 
 type Props = {
 	params: Promise<{ id: string }>;
-	searchParams: Promise<{ hearing_id?: string; side?: string; match_id?: string }>;
+	searchParams: Promise<{ hearing_id?: string; side?: string }>;
 };
 
-export default async function HearingPage({ params, searchParams }: Props)
+export default async function ResultsPage({ params, searchParams }: Props)
 {
 	const { id } = await params;
-	const { hearing_id, side, match_id } = await searchParams;
+	const { hearing_id, side } = await searchParams;
 	const c = await getCase(id);
 
 	if(!c || !hearing_id) notFound();
 
 	return (
-		<main className="h-[calc(100vh-4rem)] flex flex-col px-8 py-6 overflow-hidden">
-			<div className="max-w-7xl mx-auto w-full flex flex-col flex-1 min-h-0">
-				<Breadcrumb className="mb-4 shrink-0">
+		<main className="px-8 py-6">
+			<div className="max-w-4xl mx-auto w-full flex flex-col">
+				<Breadcrumb className="mb-6">
 					<BreadcrumbList>
 						<BreadcrumbItem>
 							<BreadcrumbLink href="/dashboard">Cases</BreadcrumbLink>
@@ -46,18 +45,21 @@ export default async function HearingPage({ params, searchParams }: Props)
 						</BreadcrumbItem>
 						<BreadcrumbSeparator />
 						<BreadcrumbItem>
-							<BreadcrumbPage>Oral Argument</BreadcrumbPage>
+							<BreadcrumbLink href={`/cases/${c.id}/hearing?hearing_id=${hearing_id}&side=${side}`}>
+								Oral Argument
+							</BreadcrumbLink>
+						</BreadcrumbItem>
+						<BreadcrumbSeparator />
+						<BreadcrumbItem>
+							<BreadcrumbPage>Decision</BreadcrumbPage>
 						</BreadcrumbItem>
 					</BreadcrumbList>
 				</Breadcrumb>
 
-				<CaseProvider case_={c}>
-					<HearingRoom
-						hearingId={hearing_id}
-						side={(side as 'plaintiff' | 'defendant') ?? 'plaintiff'}
-						matchId={match_id}
-					/>
-				</CaseProvider>
+				<ResultsContent
+					hearingId={hearing_id}
+					side={(side as 'plaintiff' | 'defendant') ?? 'plaintiff'}
+				/>
 			</div>
 		</main>
 	);
