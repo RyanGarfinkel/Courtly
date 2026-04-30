@@ -21,12 +21,12 @@ export async function POST(req: NextRequest)
 			const match = await getMatch(newState.match_id);
 			if(match)
 			{
-				if(match.plaintiff?.hearing_id === hearing_id)
+				if(match.plaintiff && match.plaintiff.hearing_id === hearing_id)
 				{
 					match.plaintiff.ruling = ruling;
 					match.plaintiff.status = 'concluded';
 				}
-				else if(match.defendant?.hearing_id === hearing_id)
+				else if(match.defendant && match.defendant.hearing_id === hearing_id)
 				{
 					match.defendant.ruling = ruling;
 					match.defendant.status = 'concluded';

@@ -19,13 +19,13 @@ export async function GET()
 		.find({ user_id: userId })
 		.toArray();
 
-	const savedCases: Case[] = (
+	const savedCases = (
 		await Promise.all(
 			savedDocs.map((doc) =>
 				db.collection('cases').findOne({ id: doc.case_id }, { projection: { _id: 0 } })
 			)
 		)
-	).filter((c): c is Case => c !== null);
+	).filter((c) => c !== null) as unknown as Case[];
 
 	return NextResponse.json({ custom: customCases, saved: savedCases });
 }
