@@ -2,7 +2,7 @@ import { MongoClient, Db } from 'mongodb';
 
 let client: MongoClient | null = null;
 
-export async function getDb(): Promise<Db>
+export const getDb = async (): Promise<Db> =>
 {
 	if(!client)
 	{
@@ -12,4 +12,4 @@ export async function getDb(): Promise<Db>
 		await client.connect();
 	}
 	return client.db('courtly');
-}
+};

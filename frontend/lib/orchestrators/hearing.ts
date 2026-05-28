@@ -1,18 +1,26 @@
-import { askQuestion, scoreResponse, reactToResponse, deliberate, deliberateCombined } from '@/lib/agents/judge';
+import { askQuestion, scoreResponse, reactToResponse, deliberate, deliberateCombined, generateBenchAside, pressFollowUp } from '@/lib/agents/judge';
+import { getHistoricalJudgeConfig } from '@/lib/services/historicalJudges';
 import { argue, respondToQuestion } from '@/lib/agents/opposingCounsel';
 import { HearingState, HearingMessage, HearingRuling, CombinedRuling, JudgeConfig, JudgeVote } from '@/types/hearing';
 import { JUDGES, getJudgeById } from '@/lib/judges';
 import { evaluate } from '@/lib/agents/scorer';
 
-const PREFERRED_QUESTIONER_IDS = ['hale', 'voss', 'crane', 'lim'];
+const PREFERRED_QUESTIONER_IDS = ['john_roberts', 'sonia_sotomayor', 'elena_kagan', 'stephen_breyer', 'hale', 'voss', 'crane', 'lim'];
 const TOTAL_TURNS = 4;
 
-function makeMessage(speaker: string, speakerId: string, content: string, type: string): HearingMessage
+const resolveJudge = (id: string): JudgeConfig =>
+{
+	const historical = getHistoricalJudgeConfig(id);
+	if(historical) return historical;
+	return getJudgeById(id);
+};
+
+const makeMessage = (speaker: string, speakerId: string, content: string, type: string): HearingMessage =>
 {
 	return { id: crypto.randomUUID(), speaker, speaker_id: speakerId, content, type };
-}
+};
 
-function shuffle<T>(arr: T[]): T[]
+const shuffle = <T>(arr: T[]): T[] =>
 {
 	const copy = [...arr];
 	for(let i = copy.length - 1; i > 0; i--)
@@ -21,26 +29,32 @@ function shuffle<T>(arr: T[]): T[]
 		[copy[i], copy[j]] = [copy[j], copy[i]];
 	}
 	return copy;
-}
+};
 
-export async function start(
+const getJudgesFromIds = (ids: string[], allJudges: JudgeConfig[]): JudgeConfig[] =>
+	ids.map(id => allJudges.find(j => j.id === id)).filter(Boolean) as JudgeConfig[];
+
+export const start = async (
 	caseId: string,
 	caseName: string,
 	caseSummary: string,
 	brief: string,
-	side: string
-): Promise<[HearingState, HearingMessage[]]>
+	side: string,
+	judges?: JudgeConfig[]
+): Promise<[HearingState, HearingMessage[]]> =>
 {
-	const preferred = shuffle(JUDGES.filter(j => PREFERRED_QUESTIONER_IDS.includes(j.id)));
-	const remaining = shuffle(JUDGES.filter(j => !PREFERRED_QUESTIONER_IDS.includes(j.id)));
+	const bench = judges ?? JUDGES;
+	const preferred = shuffle(bench.filter(j => PREFERRED_QUESTIONER_IDS.includes(j.id)));
+	const remaining = shuffle(bench.filter(j => !PREFERRED_QUESTIONER_IDS.includes(j.id)));
 	const questioningOrder = [...preferred, ...remaining].slice(0, TOTAL_TURNS).map(j => j.id);
 
-	const firstJudge = getJudgeById(questioningOrder[0]);
+	const judgeMap = Object.fromEntries(bench.map(j => [j.id, j]));
+	const firstJudge = judgeMap[questioningOrder[0]];
 	const firstQuestion = await askQuestion(firstJudge, caseName, caseSummary, brief, side, []);
 	const openingMsg = makeMessage(firstJudge.name, firstJudge.id, firstQuestion, 'question');
 
 	const dispositionScores: Record<string, number> = {};
-	for(const j of JUDGES) dispositionScores[j.id] = 0;
+	for(const j of bench) dispositionScores[j.id] = 0;
 
 	const state: HearingState = {
 		hearing_id: crypto.randomUUID(),
@@ -55,17 +69,19 @@ export async function start(
 		messages: [openingMsg],
 		disposition_scores: dispositionScores,
 		questioning_order: questioningOrder,
+		judge_ids: bench.map(j => j.id),
 	};
 
 	return [state, [openingMsg]];
-}
+};
 
-export async function processTurn(
+export const processTurn = async (
 	state: HearingState,
 	userResponse: string
-): Promise<[HearingState, HearingMessage[], HearingRuling | null]>
+): Promise<[HearingState, HearingMessage[], HearingRuling | null]> =>
 {
 	const newMessages: HearingMessage[] = [];
+	const bench = state.judge_ids?.length ? state.judge_ids.map(resolveJudge) : JUDGES;
 
 	if(state.phase === 'interrogation_user')
 	{
@@ -73,7 +89,7 @@ export async function processTurn(
 		state.messages.push(userMsg);
 		newMessages.push(userMsg);
 
-		const currentJudge = getJudgeById(state.questioning_order[state.turn - 1]);
+		const currentJudge = resolveJudge(state.questioning_order[state.turn - 1]);
 		const lastQuestion = [...state.messages]
 			.reverse()
 			.find(m => m.speaker_id === currentJudge.id && m.type === 'question')?.content ?? '';
@@ -84,9 +100,23 @@ export async function processTurn(
 			Math.min(5, state.disposition_scores[currentJudge.id] + score)
 		);
 
-		if(state.turn < state.total_turns)
+		const isLastTurn = state.turn >= state.total_turns;
+
+		if(score <= 0 && Math.random() < 0.4 && !state.press_triggered && !isLastTurn)
 		{
-			const nextJudge = getJudgeById(state.questioning_order[state.turn]);
+			const pressText = await pressFollowUp(currentJudge, lastQuestion, userResponse);
+			const pressMsg = makeMessage(currentJudge.name, currentJudge.id, pressText, 'press');
+			state.messages.push(pressMsg);
+			newMessages.push(pressMsg);
+			state.press_triggered = true;
+			return [state, newMessages, null];
+		}
+
+		state.press_triggered = false;
+
+		if(!isLastTurn)
+		{
+			const nextJudge = resolveJudge(state.questioning_order[state.turn]);
 			const historySnapshot = [...state.messages];
 
 			const [reaction, question] = await Promise.all([
@@ -99,6 +129,22 @@ export async function processTurn(
 			const reactionMsg = makeMessage(currentJudge.name, currentJudge.id, reaction, 'statement');
 			state.messages.push(reactionMsg);
 			newMessages.push(reactionMsg);
+
+			const asideCandidates = shuffle(
+				bench.filter(j => j.id !== currentJudge.id && j.id !== nextJudge.id)
+			);
+
+			if(asideCandidates.length >= 2)
+			{
+				const aside1 = asideCandidates[0];
+				const aside2 = asideCandidates[1];
+				const [line1, line2] = await generateBenchAside(aside1, aside2, state.case_name, lastQuestion, userResponse);
+
+				const asideMsg1 = makeMessage(aside1.name, aside1.id, line1, 'aside');
+				const asideMsg2 = makeMessage(aside2.name, aside2.id, line2, 'aside');
+				state.messages.push(asideMsg1, asideMsg2);
+				newMessages.push(asideMsg1, asideMsg2);
+			}
 
 			const qMsg = makeMessage(nextJudge.name, nextJudge.id, question, 'question');
 			state.messages.push(qMsg);
@@ -119,7 +165,7 @@ export async function processTurn(
 
 			for(const idx of [0, 2])
 			{
-				const qJudge = getJudgeById(state.questioning_order[idx]);
+				const qJudge = resolveJudge(state.questioning_order[idx]);
 				const aiQuestion = await askQuestion(
 					qJudge,
 					state.case_name,
@@ -155,7 +201,7 @@ export async function processTurn(
 
 		const [scores, ...votes] = await Promise.all([
 			evaluate(state.brief, state.messages, state.side),
-			...JUDGES.map(j => deliberate(j, state.case_name, state.brief, state.side, state.messages, state.disposition_scores[j.id])),
+			...bench.map(j => deliberate(j, state.case_name, state.brief, state.side, state.messages, state.disposition_scores[j.id])),
 		]) as [import('@/types/hearing').HearingScores, ...JudgeVote[]];
 
 		const forVotes = votes.filter(v => v.vote === 'for');
@@ -203,15 +249,20 @@ export async function processTurn(
 	}
 
 	return [state, [], null];
-}
+};
 
-export async function runCombinedDeliberation(
+export const runCombinedDeliberation = async (
 	plaintiffState: HearingState,
-	defendantState: HearingState
-): Promise<CombinedRuling>
+	defendantState: HearingState,
+	judges: JudgeConfig[] = JUDGES
+): Promise<CombinedRuling> =>
 {
+	const bench = plaintiffState.judge_ids?.length
+		? plaintiffState.judge_ids.map(resolveJudge)
+		: judges;
+
 	const votes = await Promise.all(
-		JUDGES.map(j => deliberateCombined(
+		bench.map(j => deliberateCombined(
 			j,
 			plaintiffState.case_name,
 			plaintiffState.brief,
@@ -241,4 +292,4 @@ export async function runCombinedDeliberation(
 		concurrences: majorityRest,
 		dissents: minorityVotes,
 	};
-}
+};

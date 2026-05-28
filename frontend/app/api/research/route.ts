@@ -2,7 +2,7 @@ import { getCachedResearch, saveResearch } from '@/lib/services/caseMemory';
 import { run as runRetriever } from '@/lib/agents/retriever';
 import { NextRequest, NextResponse } from 'next/server';
 
-export async function GET(request: NextRequest)
+export const GET = async (request: NextRequest) =>
 {
 	const { searchParams } = request.nextUrl;
 	const caseId = searchParams.get('case_id') ?? '';
@@ -25,4 +25,4 @@ export async function GET(request: NextRequest)
 	{
 		return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
 	}
-}
+};

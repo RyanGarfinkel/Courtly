@@ -10,7 +10,7 @@ interface Props
 	renderCard: (c: Case) => React.ReactNode;
 }
 
-export default function Carousel({ cases, renderCard }: Props)
+const Carousel = ({ cases, renderCard }: Props) =>
 {
 	const trackRef = useRef<HTMLDivElement>(null);
 	const [index, setIndex] = useState(0);
@@ -27,7 +27,7 @@ export default function Carousel({ cases, renderCard }: Props)
 	}, [index, maxIndex]);
 
 	return (
-		<div className="relative w-full overflow-hidden group">
+		<div className='relative w-full overflow-hidden group'>
 			<div
 				tabIndex={0}
 				onKeyDown={e =>
@@ -35,11 +35,11 @@ export default function Carousel({ cases, renderCard }: Props)
 					if(e.key === 'ArrowLeft') setIndex(p => Math.max(0, p - 1));
 					if(e.key === 'ArrowRight') setIndex(p => Math.min(maxIndex, p + 1));
 				}}
-				className="outline-none"
+				className='outline-none'
 			>
-				<div ref={trackRef} className="flex overflow-x-auto scroll-smooth no-scrollbar gap-4 px-6 py-2">
+				<div ref={trackRef} className='flex overflow-x-auto scroll-smooth no-scrollbar gap-4 px-6 py-2'>
 					{cases.map(c => (
-						<div key={c.id} className="flex-none w-full sm:w-[calc(50%-8px)] lg:w-[calc(33.333%-10.666px)]">
+						<div key={c.id} className='flex-none w-full sm:w-[calc(50%-8px)] lg:w-[calc(33.333%-10.666px)]'>
 							{renderCard(c)}
 						</div>
 					))}
@@ -48,29 +48,29 @@ export default function Carousel({ cases, renderCard }: Props)
 
 			{pages > 1 && (
 				<>
-					<div className="absolute left-0 top-1/2 -translate-y-1/2 z-50">
+					<div className='absolute left-0 top-1/2 -translate-y-1/2 z-50'>
 						<button
 							onClick={() => setIndex(p => Math.max(0, p - 1))}
-							aria-label="Previous"
+							aria-label='Previous'
 							disabled={index <= 0}
-							className="flex items-center justify-center w-10 h-10 rounded-full bg-foreground text-background shadow-lg border border-border disabled:opacity-0 disabled:cursor-not-allowed transition-opacity hover:bg-foreground/90"
+							className='flex items-center justify-center w-10 h-10 rounded-full bg-foreground text-background shadow-lg border border-border disabled:opacity-0 disabled:cursor-not-allowed transition-opacity hover:bg-foreground/90'
 						>
-							<ChevronLeft className="w-6 h-6" />
+							<ChevronLeft className='w-6 h-6' />
 						</button>
 					</div>
 
-					<div className="absolute right-0 top-1/2 -translate-y-1/2 z-50">
+					<div className='absolute right-0 top-1/2 -translate-y-1/2 z-50'>
 						<button
 							onClick={() => setIndex(p => Math.min(maxIndex, p + 1))}
-							aria-label="Next"
+							aria-label='Next'
 							disabled={index >= pages - 1}
-							className="flex items-center justify-center w-10 h-10 rounded-full bg-foreground text-background shadow-lg border border-border disabled:opacity-0 disabled:cursor-not-allowed transition-opacity hover:bg-foreground/90"
+							className='flex items-center justify-center w-10 h-10 rounded-full bg-foreground text-background shadow-lg border border-border disabled:opacity-0 disabled:cursor-not-allowed transition-opacity hover:bg-foreground/90'
 						>
-							<ChevronRight className="w-6 h-6" />
+							<ChevronRight className='w-6 h-6' />
 						</button>
 					</div>
 
-					<div className="flex items-center justify-center gap-2 mt-2">
+					<div className='flex items-center justify-center gap-2 mt-2'>
 						{Array.from({ length: pages }).map((_, i) => (
 							<button
 								key={i}
@@ -84,4 +84,6 @@ export default function Carousel({ cases, renderCard }: Props)
 			)}
 		</div>
 	);
-}
+};
+
+export default Carousel;

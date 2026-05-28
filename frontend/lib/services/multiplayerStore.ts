@@ -1,7 +1,7 @@
 import { MultiplayerMatch } from '@/types/multiplayer';
 import { getDb } from '@/lib/mongo';
 
-export async function createMatch(match: MultiplayerMatch): Promise<void>
+export const createMatch = async (match: MultiplayerMatch): Promise<void> =>
 {
 	const db = await getDb();
 	await db.collection('multiplayer_matches').replaceOne(
@@ -9,9 +9,9 @@ export async function createMatch(match: MultiplayerMatch): Promise<void>
 		match,
 		{ upsert: true }
 	);
-}
+};
 
-export async function getMatch(matchId: string): Promise<MultiplayerMatch | null>
+export const getMatch = async (matchId: string): Promise<MultiplayerMatch | null> =>
 {
 	const db = await getDb();
 	const doc = await db.collection('multiplayer_matches').findOne(
@@ -20,9 +20,9 @@ export async function getMatch(matchId: string): Promise<MultiplayerMatch | null
 	);
 	if(doc === null) return null;
 	return doc as unknown as MultiplayerMatch;
-}
+};
 
-export async function updateMatch(match: MultiplayerMatch): Promise<void>
+export const updateMatch = async (match: MultiplayerMatch): Promise<void> =>
 {
 	await createMatch(match);
-}
+};

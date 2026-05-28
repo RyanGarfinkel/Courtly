@@ -1,7 +1,7 @@
 import { draft, expandNotes, strengthen, counterarguments } from '@/lib/agents/briefWriter';
 import { NextRequest, NextResponse } from 'next/server';
 
-export async function POST(request: NextRequest)
+export const POST = async (request: NextRequest) =>
 {
 	try
 	{
@@ -21,4 +21,4 @@ export async function POST(request: NextRequest)
 	{
 		return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
 	}
-}
+};

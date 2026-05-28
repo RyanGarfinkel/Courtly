@@ -4,7 +4,7 @@ export interface Judge
 	name: string;
 	short: string;
 	philosophy: string;
-	image: string;
+	image?: string;
 }
 
 export const JUDGES: Judge[] = [
@@ -20,3 +20,5 @@ export const JUDGES: Judge[] = [
 ];
 
 export const JUDGE_MAP = Object.fromEntries(JUDGES.map(j => [j.id, j]));
+
+export const FALLBACK_JUDGES = JUDGES;

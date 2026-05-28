@@ -21,12 +21,12 @@ const FALLBACK: StressTestResult = {
 	suggestions: ['Try rephrasing your argument more directly.'],
 };
 
-export async function analyze(
+export const analyze = async (
 	question: string,
 	draft: string,
 	brief: string,
 	caseName: string
-): Promise<StressTestResult>
+): Promise<StressTestResult> =>
 {
 	const prompt = `You are a Supreme Court advocacy coach evaluating a draft oral argument response.
 Case: ${caseName}
@@ -75,4 +75,4 @@ Return ONLY valid JSON in this exact shape:
 	{
 		return FALLBACK;
 	}
-}
+};

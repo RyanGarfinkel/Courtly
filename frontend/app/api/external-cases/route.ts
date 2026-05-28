@@ -1,7 +1,7 @@
 import { run as runRetriever } from '@/lib/agents/retriever';
 import { NextRequest, NextResponse } from 'next/server';
 
-export async function GET(request: NextRequest)
+export const GET = async (request: NextRequest) =>
 {
 	const { searchParams } = request.nextUrl;
 	const q = searchParams.get('q') ?? '';
@@ -21,4 +21,4 @@ export async function GET(request: NextRequest)
 	{
 		return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
 	}
-}
+};

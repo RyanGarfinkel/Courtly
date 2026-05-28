@@ -1,6 +1,9 @@
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
+import { getBenchForYear, getHistoricalUIJudge } from '@/lib/services/historicalJudges';
 import { notFound } from 'next/navigation';
 import { CaseProvider } from '@/contexts/case';
+import { UIJudge } from '@/types/hearing';
+import { auth0 } from '@/lib/auth0';
 import { getDb } from '@/lib/mongo';
 import HearingRoom from './hearing-room';
 import { Case } from '@/types/case';
@@ -28,9 +31,21 @@ export default async function HearingPage({ params, searchParams }: Props)
 {
 	const { id } = await params;
 	const { hearing_id, side, match_id } = await searchParams;
-	const c = await getCase(id);
+	const [c, session] = await Promise.all([getCase(id), auth0.getSession()]);
+	const userId = session?.user?.sub ?? null;
 
 	if(!c || !hearing_id) notFound();
+
+	let initialJudges: UIJudge[] | undefined;
+	if(c.year && typeof c.year === 'number')
+	{
+		const bench = getBenchForYear(c.year);
+		if(bench.length === 9)
+		{
+			const uiJudges = bench.map(j => getHistoricalUIJudge(j.id)).filter(Boolean) as UIJudge[];
+			if(uiJudges.length === 9) initialJudges = uiJudges;
+		}
+	}
 
 	return (
 		<main className="h-[calc(100vh-4rem)] flex flex-col px-8 py-6 overflow-hidden">
@@ -56,6 +71,8 @@ export default async function HearingPage({ params, searchParams }: Props)
 						hearingId={hearing_id}
 						side={(side as 'plaintiff' | 'defendant') ?? 'plaintiff'}
 						matchId={match_id}
+						initialJudges={initialJudges}
+						userId={userId}
 					/>
 				</CaseProvider>
 			</div>

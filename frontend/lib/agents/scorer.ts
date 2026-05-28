@@ -3,11 +3,11 @@ import { generateText } from '@/lib/gemini';
 
 const FALLBACK: HearingScores = { consistency: 50, precedent: 50, responsiveness: 50, overall: 50 };
 
-export async function evaluate(
+export const evaluate = async (
 	brief: string,
 	allMessages: HearingMessage[],
 	side: string
-): Promise<HearingScores>
+): Promise<HearingScores> =>
 {
 	const history = allMessages.map(m => `${m.speaker}: ${m.content}`).join('\n');
 	const party = side === 'plaintiff' ? 'petitioner' : 'respondent';
@@ -44,4 +44,4 @@ Return ONLY valid JSON in this exact format:
 	{
 		return FALLBACK;
 	}
-}
+};

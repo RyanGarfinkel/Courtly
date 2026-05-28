@@ -1,20 +1,20 @@
 import { JudgeConfig, HearingMessage, JudgeVote } from '@/types/hearing';
 import { generateText } from '@/lib/gemini';
 
-function formatHistory(messages: HearingMessage[]): string
+const formatHistory = (messages: HearingMessage[]): string =>
 {
 	if(!messages.length) return 'No exchanges yet.';
 	return messages.map(m => `${m.speaker}: ${m.content}`).join('\n');
-}
+};
 
-export async function askQuestion(
+export const askQuestion = async (
 	judge: JudgeConfig,
 	caseName: string,
 	caseSummary: string,
 	brief: string,
 	side: string,
 	conversationHistory: HearingMessage[]
-): Promise<string>
+): Promise<string> =>
 {
 	const history = formatHistory(conversationHistory);
 	const role = side === 'plaintiff' ? 'petitioner (plaintiff)' : 'respondent (defendant)';
@@ -34,14 +34,14 @@ ${history}
 
 Ask a single, pointed oral argument question that challenges the attorney based on your judicial philosophy. Be direct, skeptical, and specific to their argument. Do not preface the question — ask it immediately as you would from the bench. One question only.`;
 	return generateText(prompt);
-}
+};
 
-export async function scoreResponse(
+export const scoreResponse = async (
 	judge: JudgeConfig,
 	question: string,
 	userResponse: string,
 	brief: string
-): Promise<number>
+): Promise<number> =>
 {
 	const prompt = `${judge.system_prompt}
 
@@ -77,14 +77,14 @@ Return nothing but the integer.`;
 	{
 		return 0;
 	}
-}
+};
 
-export async function reactToResponse(
+export const reactToResponse = async (
 	judge: JudgeConfig,
 	question: string,
 	userResponse: string,
 	score: number
-): Promise<string>
+): Promise<string> =>
 {
 	const strength =
 		score === 2 ? 'excellent' :
@@ -107,16 +107,16 @@ If the answer was fair, weak, or poor, explain briefly why you found it unsatisf
 
 Keep it very brief (one sentence) and in your specific judicial voice. Do not use any introductory phrases like "The judge says." Just the quote.`;
 	return generateText(prompt);
-}
+};
 
-export async function deliberate(
+export const deliberate = async (
 	judge: JudgeConfig,
 	caseName: string,
 	brief: string,
 	side: string,
 	allMessages: HearingMessage[],
 	dispositionScore: number
-): Promise<JudgeVote>
+): Promise<JudgeVote> =>
 {
 	const history = formatHistory(allMessages);
 	const party = side === 'plaintiff' ? 'petitioner' : 'respondent';
@@ -174,16 +174,16 @@ Return only valid JSON.`;
 			opinion: 'The Court has considered the arguments presented and reached its conclusion.',
 		};
 	}
-}
+};
 
-export async function deliberateCombined(
+export const deliberateCombined = async (
 	judge: JudgeConfig,
 	caseName: string,
 	plaintiffBrief: string,
 	plaintiffMessages: HearingMessage[],
 	defendantBrief: string,
 	defendantMessages: HearingMessage[]
-): Promise<JudgeVote>
+): Promise<JudgeVote> =>
 {
 	const filterOral = (msgs: HearingMessage[]) =>
 		msgs.filter(m => m.type === 'question' || m.speaker_id === 'user');
@@ -243,4 +243,42 @@ Return only valid JSON.`;
 			opinion: 'The Court has considered the arguments presented and reached its conclusion.',
 		};
 	}
-}
+};
+
+export const generateBenchAside = async (
+	judge1: JudgeConfig,
+	judge2: JudgeConfig,
+	caseName: string,
+	lastQuestion: string,
+	userResponse: string
+): Promise<[string, string]> =>
+{
+	const prompt = `You are two Supreme Court justices — ${judge1.name} (${judge1.philosophy}) and ${judge2.name} (${judge2.philosophy}) — who just heard counsel's response to: "${lastQuestion}". Counsel said: "${userResponse}". React to each other in exactly 2 very short sentences (one per justice), as an overheard bench conversation. Speak directly to each other, not to counsel. Be specific to what was just said. Format your response as:
+${judge1.name}: <sentence>
+${judge2.name}: <sentence>
+Return ONLY those two lines, nothing else.`;
+
+	const raw = (await generateText(prompt)).trim();
+	const lines = raw.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+
+	const extract = (line: string) =>
+	{
+		const colonIdx = line.indexOf(':');
+		if(colonIdx === -1) return line;
+		return line.slice(colonIdx + 1).trim();
+	};
+
+	const line1 = extract(lines[0] ?? '');
+	const line2 = extract(lines[1] ?? '');
+	return [line1, line2];
+};
+
+export const pressFollowUp = async (
+	judge: JudgeConfig,
+	originalQuestion: string,
+	userResponse: string
+): Promise<string> =>
+{
+	const prompt = `${judge.system_prompt}. You asked: "${originalQuestion}". Counsel responded: "${userResponse}". You found this answer unsatisfying — it dodged, contradicted, or failed to address your core concern. In ONE pointed sentence, press counsel on the specific gap in their answer. Speak directly from the bench. Do not repeat your original question — zero in on what they failed to address.`;
+	return generateText(prompt);
+};

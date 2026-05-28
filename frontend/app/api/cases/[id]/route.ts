@@ -3,10 +3,10 @@ import { searchOpinions, getClusterJudges } from '@/lib/courtlistener';
 import { NextRequest, NextResponse } from 'next/server';
 import { getDb } from '@/lib/mongo';
 
-export async function GET(
+export const GET = async (
 	request: NextRequest,
 	{ params }: { params: Promise<{ id: string }> }
-)
+) =>
 {
 	const { id } = await params;
 
@@ -41,4 +41,4 @@ export async function GET(
 	{
 		return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
 	}
-}
+};

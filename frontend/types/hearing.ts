@@ -6,12 +6,32 @@ export interface JudgeConfig
 	system_prompt: string;
 }
 
+export interface UIJudge
+{
+	id: string;
+	name: string;
+	short: string;
+	philosophy: string;
+	image?: string;
+}
+
+export interface BenchAside
+{
+	judge1_id: string;
+	judge1_name: string;
+	judge2_id: string;
+	judge2_name: string;
+	judge1_line: string;
+	judge2_line: string;
+}
+
 export interface HearingMessage
 {
 	id: string;
 	speaker: string;
 	speaker_id: string;
 	content: string;
+	// type values: 'question' | 'statement' | 'argument' | 'rebuttal' | 'aside' | 'press'
 	type: string;
 }
 
@@ -68,5 +88,8 @@ export interface HearingState
 	messages: HearingMessage[];
 	disposition_scores: Record<string, number>;
 	questioning_order: string[];
+	judge_ids: string[];
+	case_year?: number;
+	press_triggered?: boolean;
 	match_id?: string;
 }

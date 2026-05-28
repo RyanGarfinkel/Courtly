@@ -7,21 +7,21 @@ interface Props
 	userId: string;
 }
 
-export default function MatchesSection({ matches, userId }: Props)
+const MatchesSection = ({ matches, userId }: Props) =>
 {
 	const visible = matches.filter(m => m.status !== 'cancelled');
 	if(!visible.length) return null;
 
 	return (
-		<div className="mb-10">
-			<h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-4">
-				Your Matches
-			</h2>
-			<div className="flex flex-col gap-2">
+		<div className='mb-10'>
+			<p className='label-caps text-muted-foreground mb-4'>Your Matches</p>
+			<div className='flex flex-col border border-border rounded-sm overflow-hidden'>
 				{visible.map(match => (
 					<MatchRow key={match.match_id} match={match} userId={userId} />
 				))}
 			</div>
 		</div>
 	);
-}
+};
+
+export default MatchesSection;

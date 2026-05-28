@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export const maxDuration = 60;
 
-export async function POST(req: NextRequest)
+export const POST = async (req: NextRequest) =>
 {
 	try
 	{
@@ -19,4 +19,4 @@ export async function POST(req: NextRequest)
 	{
 		return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
 	}
-}
+};

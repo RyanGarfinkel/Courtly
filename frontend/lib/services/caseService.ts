@@ -3,12 +3,10 @@ import { generateText } from '@/lib/gemini';
 import { getDb } from '@/lib/mongo';
 import crypto from 'crypto';
 
-export function caseId(name: string): string
-{
-	return crypto.createHash('sha1').update(name.toLowerCase().trim()).digest('hex').slice(0, 10);
-}
+export const caseId = (name: string): string =>
+	crypto.createHash('sha1').update(name.toLowerCase().trim()).digest('hex').slice(0, 10);
 
-export async function expandSummary(name: string, snippet: string): Promise<string>
+export const expandSummary = async (name: string, snippet: string): Promise<string> =>
 {
 	const prompt = `Summarize the US Supreme Court case "${name}" in 3-4 paragraphs.
 Cover: the facts and background, the central legal question, the Court's holding, and the broader significance.
@@ -22,12 +20,12 @@ Context from the opinion: ${snippet}`;
 	{
 		return snippet;
 	}
-}
+};
 
-export async function mapCl(
+export const mapCl = async (
 	result: any,
 	options?: { overrideId?: string; expand?: boolean }
-): Promise<any | null>
+): Promise<any | null> =>
 {
 	const name = (result.caseName ?? '').trim();
 	if(!name) return null;
@@ -69,9 +67,9 @@ export async function mapCl(
 		court_listener_link: rawUrl ? `https://www.courtlistener.com${rawUrl}` : null,
 		panel,
 	};
-}
+};
 
-export async function clSearch(query: string, limit = 5): Promise<any[]>
+export const clSearch = async (query: string, limit = 5): Promise<any[]> =>
 {
 	const results = await searchOpinions(query, { limit });
 
@@ -99,9 +97,9 @@ export async function clSearch(query: string, limit = 5): Promise<any[]>
 	);
 
 	return deduped;
-}
+};
 
-export async function seedIfEmpty(): Promise<void>
+export const seedIfEmpty = async (): Promise<void> =>
 {
 	const db = await getDb();
 	const count = await db.collection('cases').countDocuments();
@@ -110,4 +108,4 @@ export async function seedIfEmpty(): Promise<void>
 		const { run } = await import('@/lib/seed');
 		await run();
 	}
-}
+};

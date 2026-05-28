@@ -3,7 +3,7 @@ import { MultiplayerMatch, MatchPlayer } from '@/types/multiplayer';
 import { NextRequest, NextResponse } from 'next/server';
 import { auth0 } from '@/lib/auth0';
 
-export async function POST(req: NextRequest)
+export const POST = async (req: NextRequest) =>
 {
 	const session = await auth0.getSession();
 	if(!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -34,4 +34,4 @@ export async function POST(req: NextRequest)
 
 	await createMatch(match);
 	return NextResponse.json({ match_id: matchId }, { status: 201 });
-}
+};

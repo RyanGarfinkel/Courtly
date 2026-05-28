@@ -1,6 +1,6 @@
 import { searchOpinions } from '@/lib/courtlistener';
-import { generateText } from '@/lib/gemini';
 import { LegalSource, Citation } from '@/types/legal';
+import { generateText } from '@/lib/gemini';
 
 const QUOTE_PROMPT = `You are a legal research assistant. Given a legal query and a case snippet, extract the single most relevant quote from the snippet that directly supports or addresses the query.
 
@@ -17,10 +17,10 @@ If the snippet has no relevant content, respond:
 QUOTE: none
 EXPLANATION: none`;
 
-export async function run(
+export const run = async (
 	query: string,
 	options?: { court?: string; limit?: number; offset?: number }
-): Promise<LegalSource[]>
+): Promise<LegalSource[]> =>
 {
 	const court = options?.court ?? 'scotus';
 	const limit = options?.limit ?? 5;
@@ -84,4 +84,4 @@ export async function run(
 	}
 
 	return sources;
-}
+};

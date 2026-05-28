@@ -3,7 +3,7 @@ import { auth0 } from '@/lib/auth0';
 import { getDb } from '@/lib/mongo';
 import { Case } from '@/types/case';
 
-export async function GET()
+export const GET = async () =>
 {
 	const session = await auth0.getSession();
 	if(!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -28,4 +28,4 @@ export async function GET()
 	).filter((c) => c !== null) as unknown as Case[];
 
 	return NextResponse.json({ custom: customCases, saved: savedCases });
-}
+};

@@ -74,7 +74,7 @@ const JUDGES = [
 	},
 ];
 
-async function seedOne(name: string): Promise<void>
+const seedOne = async (name: string): Promise<void> =>
 {
 	const db = await getDb();
 	try
@@ -89,9 +89,9 @@ async function seedOne(name: string): Promise<void>
 	{
 		console.error(`seed: failed to seed "${name}":`, e);
 	}
-}
+};
 
-export async function run(): Promise<void>
+export const run = async (): Promise<void> =>
 {
 	const db = await getDb();
 
@@ -102,6 +102,6 @@ export async function run(): Promise<void>
 	}
 
 	await Promise.all(PRESET_NAMES.map(name => seedOne(name)));
-}
+};
 
 export default run;

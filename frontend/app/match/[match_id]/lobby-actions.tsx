@@ -1,12 +1,12 @@
 'use client';
 
-import { MultiplayerMatch } from "@/types/multiplayer";
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { API_URL } from "@/lib/api";
-import { Scale, Shield, Clock, RefreshCw } from "lucide-react";
+import { MultiplayerMatch } from '@/types/multiplayer';
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { API_URL } from '@/lib/api';
+import { Scale, Shield, Clock, RefreshCw } from 'lucide-react';
 
 interface Props
 {
@@ -14,22 +14,22 @@ interface Props
 	userId: string | null;
 }
 
-function statusVariant(status: MultiplayerMatch['status']): 'secondary' | 'outline' | 'default'
+const statusVariant = (status: MultiplayerMatch['status']): 'secondary' | 'outline' | 'default' =>
 {
 	if(status === 'waiting') return 'secondary';
 	if(status === 'active') return 'default';
 	return 'outline';
-}
+};
 
-function statusLabel(status: MultiplayerMatch['status'])
+const statusLabel = (status: MultiplayerMatch['status']) =>
 {
 	if(status === 'waiting') return 'Waiting for opponent';
 	if(status === 'active') return 'In progress';
 	if(status === 'cancelled') return 'Cancelled';
 	return 'Concluded';
-}
+};
 
-export default function LobbyActions({ match, userId }: Props)
+const LobbyActions = ({ match, userId }: Props) =>
 {
 	const router = useRouter();
 	const [joining, setJoining] = useState(false);
@@ -54,7 +54,7 @@ export default function LobbyActions({ match, userId }: Props)
 		if(match.status !== 'waiting') setPollingActive(false);
 	}, [match.status]);
 
-	async function handleJoin()
+	const handleJoin = async () =>
 	{
 		setJoining(true);
 		setError(null);
@@ -80,9 +80,9 @@ export default function LobbyActions({ match, userId }: Props)
 			setError(err instanceof Error ? err.message : 'Something went wrong');
 			setJoining(false);
 		}
-	}
+	};
 
-	async function handleCancel()
+	const handleCancel = async () =>
 	{
 		setCancelling(true);
 		setError(null);
@@ -106,7 +106,7 @@ export default function LobbyActions({ match, userId }: Props)
 			setError(err instanceof Error ? err.message : 'Something went wrong');
 			setCancelling(false);
 		}
-	}
+	};
 
 	const isPlaintiff = userId && match.plaintiff?.user_id === userId;
 	const isDefendant = userId && match.defendant?.user_id === userId;
@@ -121,45 +121,45 @@ export default function LobbyActions({ match, userId }: Props)
 	if(match.status === 'cancelled')
 	{
 		return (
-			<div className="flex flex-col gap-4">
-				<Badge variant="outline" className="self-start px-3 py-1 text-xs font-medium">
+			<div className='flex flex-col gap-4'>
+				<Badge variant='outline' className='self-start px-3 py-1 text-xs font-medium'>
 					Cancelled
 				</Badge>
-				<p className="text-sm text-muted-foreground">This match was cancelled.</p>
+				<p className='text-sm text-muted-foreground'>This match was cancelled.</p>
 				<Button
 					asChild
-					variant="outline"
-					size="sm"
-					className="self-start focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+					variant='outline'
+					size='sm'
+					className='self-start focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
 				>
-					<a href="/dashboard">Back to Dashboard</a>
+					<a href='/dashboard'>Back to Dashboard</a>
 				</Button>
 			</div>
 		);
 	}
 
 	return (
-		<div className="flex flex-col gap-4">
+		<div className='flex flex-col gap-4'>
 			<Badge
 				variant={statusVariant(match.status)}
-				className="self-start px-3 py-1 text-xs font-medium"
+				className='self-start px-3 py-1 text-xs font-medium'
 			>
 				{statusLabel(match.status)}
 			</Badge>
 
 			{error && (
-				<p className="text-sm text-destructive">{error}</p>
+				<p className='text-sm text-destructive'>{error}</p>
 			)}
 
 			{match.status === 'waiting' && !isParticipant && !userId && (
-				<div className="flex flex-col gap-3">
-					<p className="text-sm text-muted-foreground">
+				<div className='flex flex-col gap-3'>
+					<p className='text-sm text-muted-foreground'>
 						Sign in to join this match.
 					</p>
 					<Button
 						asChild
-						size="lg"
-						className="w-full h-12 font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+						size='lg'
+						className='w-full h-12 font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
 					>
 						<a href={`/auth/login?returnTo=/match/${match.match_id}`}>Sign in to join</a>
 					</Button>
@@ -167,31 +167,31 @@ export default function LobbyActions({ match, userId }: Props)
 			)}
 
 			{match.status === 'waiting' && !isParticipant && userId && (
-				<div className="flex flex-col gap-3">
-					<p className="text-sm text-muted-foreground">
+				<div className='flex flex-col gap-3'>
+					<p className='text-sm text-muted-foreground'>
 						Join as the opposing side to begin the match.
 					</p>
 					<Button
 						onClick={handleJoin}
 						disabled={joining}
-						size="lg"
-						className="w-full h-12 font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+						size='lg'
+						className='w-full h-12 font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
 					>
 						{joining ? (
-							<span className="flex items-center gap-2">
-								<div className="w-4 h-4 border-2 border-background/30 border-t-background rounded-full animate-spin" />
+							<span className='flex items-center gap-2'>
+								<div className='w-4 h-4 border-2 border-background/30 border-t-background rounded-full animate-spin' />
 								Joining...
 							</span>
 						) : (
-							<span className="flex items-center gap-2">
+							<span className='flex items-center gap-2'>
 								{match.plaintiff ? (
 									<>
-										<Shield className="w-4 h-4" />
+										<Shield className='w-4 h-4' />
 										Join as Defense
 									</>
 								) : (
 									<>
-										<Scale className="w-4 h-4" />
+										<Scale className='w-4 h-4' />
 										Join as Plaintiff
 									</>
 								)}
@@ -202,18 +202,18 @@ export default function LobbyActions({ match, userId }: Props)
 			)}
 
 			{match.status === 'waiting' && isParticipant && (
-				<div className="flex flex-col gap-3">
-					<div className="flex items-center gap-2 text-sm text-muted-foreground">
-						<Clock className="w-4 h-4 shrink-0" />
+				<div className='flex flex-col gap-3'>
+					<div className='flex items-center gap-2 text-sm text-muted-foreground'>
+						<Clock className='w-4 h-4 shrink-0' />
 						<span>Waiting for your opponent to join...</span>
 					</div>
 					<Button
-						variant="outline"
-						size="sm"
-						className="self-start flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+						variant='outline'
+						size='sm'
+						className='self-start flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
 						onClick={() => router.refresh()}
 					>
-						<RefreshCw className="w-3.5 h-3.5" />
+						<RefreshCw className='w-3.5 h-3.5' />
 						Refresh
 					</Button>
 				</div>
@@ -222,8 +222,8 @@ export default function LobbyActions({ match, userId }: Props)
 			{match.status === 'active' && isParticipant && userSide && (
 				<Button
 					asChild
-					size="lg"
-					className="w-full h-12 font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+					size='lg'
+					className='w-full h-12 font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
 				>
 					<a href={`/cases/${match.case_id}/brief?side=${userSide}&match_id=${match.match_id}`}>
 						Begin your argument
@@ -232,15 +232,15 @@ export default function LobbyActions({ match, userId }: Props)
 			)}
 
 			{match.status === 'active' && !isParticipant && (
-				<p className="text-sm text-muted-foreground">This match is already in progress.</p>
+				<p className='text-sm text-muted-foreground'>This match is already in progress.</p>
 			)}
 
 			{match.status === 'concluded' && (
 				<Button
 					asChild
-					size="lg"
-					variant="outline"
-					className="w-full h-12 font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+					size='lg'
+					variant='outline'
+					className='w-full h-12 font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
 				>
 					<a href={`/match/${match.match_id}/results`}>
 						View combined results
@@ -249,13 +249,13 @@ export default function LobbyActions({ match, userId }: Props)
 			)}
 
 			{canCancel && (
-				<div className="pt-1">
+				<div className='pt-1'>
 					<Button
-						variant="ghost"
-						size="sm"
+						variant='ghost'
+						size='sm'
 						disabled={cancelling}
 						onClick={handleCancel}
-						className="text-muted-foreground hover:text-destructive transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+						className='text-muted-foreground hover:text-destructive transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
 					>
 						{cancelling ? 'Cancelling...' : 'Cancel match'}
 					</Button>
@@ -263,4 +263,6 @@ export default function LobbyActions({ match, userId }: Props)
 			)}
 		</div>
 	);
-}
+};
+
+export default LobbyActions;

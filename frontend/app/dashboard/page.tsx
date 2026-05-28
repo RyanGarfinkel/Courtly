@@ -1,10 +1,11 @@
-import { clSearch } from "@/lib/services/caseService";
-import { MultiplayerMatch } from "@/types/multiplayer";
-import { Case } from "@/types/case";
-import { getDb } from "@/lib/mongo";
-import { auth0 } from "@/lib/auth0";
-import MatchesSection from "./matches-section";
-import CasesGrid from "./cases-grid";
+import { clSearch } from '@/lib/services/caseService';
+import { MultiplayerMatch } from '@/types/multiplayer';
+import { Case } from '@/types/case';
+import { getDb } from '@/lib/mongo';
+import { auth0 } from '@/lib/auth0';
+import MatchesSection from './matches-section';
+import RecordSection from './record-section';
+import CasesGrid from './cases-grid';
 
 interface CasesResponse
 {
@@ -16,7 +17,7 @@ interface CasesResponse
 	total_pages: number;
 }
 
-async function getCases(query: string, page: number, limit: number, extra?: Record<string, string | undefined>): Promise<CasesResponse>
+const getCases = async (query: string, page: number, limit: number, extra?: Record<string, string | undefined>): Promise<CasesResponse> =>
 {
 	const empty = { cases: [], query, page, page_size: limit, total_count: 0, total_pages: 0 };
 	const searchQuery = query || extra?.name || extra?.keyword || '';
@@ -42,9 +43,9 @@ async function getCases(query: string, page: number, limit: number, extra?: Reco
 	{
 		return empty;
 	}
-}
+};
 
-async function getMatches(userId: string): Promise<MultiplayerMatch[]>
+const getMatches = async (userId: string): Promise<MultiplayerMatch[]> =>
 {
 	try
 	{
@@ -62,7 +63,7 @@ async function getMatches(userId: string): Promise<MultiplayerMatch[]>
 	{
 		return [];
 	}
-}
+};
 
 type SearchParams = {
 	q?: string;
@@ -79,11 +80,11 @@ type SearchParams = {
 
 const PAGE_SIZE = 6;
 
-export default async function Dashboard({ searchParams }: { searchParams?: Promise<SearchParams> })
+const Dashboard = async ({ searchParams }: { searchParams?: Promise<SearchParams> }) =>
 {
 	const params = await searchParams;
-	const query = params?.q?.trim() ?? "";
-	const rawPage = Number(params?.page ?? "1");
+	const query = params?.q?.trim() ?? '';
+	const rawPage = Number(params?.page ?? '1');
 	const page = Number.isFinite(rawPage) && rawPage > 0 ? Math.floor(rawPage) : 1;
 	const extras: Record<string, string | undefined> = {
 		category: params?.category,
@@ -105,12 +106,19 @@ export default async function Dashboard({ searchParams }: { searchParams?: Promi
 	]);
 
 	return (
-		<main className="flex-1 px-8 py-10">
-			<div className="max-w-5xl mx-auto">
+		<main className='flex-1 px-8 py-10'>
+			<div className='max-w-5xl mx-auto'>
 				{userId && matches.length > 0 && (
 					<MatchesSection matches={matches} userId={userId} />
 				)}
-				<p className="text-muted-foreground mb-6">Select a case to bring before the court.</p>
+
+				{userId && <RecordSection />}
+
+				{userId && <div className='section-rule' />}
+
+				<h1 className='font-heading text-2xl font-bold text-foreground mb-1'>The Docket</h1>
+				<p className='text-sm text-muted-foreground mb-6'>Browse cases from the Supreme Court of the United States.</p>
+
 				<CasesGrid
 					key={`${data.query}-${data.page}`}
 					cases={data.cases}
@@ -123,4 +131,6 @@ export default async function Dashboard({ searchParams }: { searchParams?: Promi
 			</div>
 		</main>
 	);
-}
+};
+
+export default Dashboard;

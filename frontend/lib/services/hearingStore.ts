@@ -1,7 +1,7 @@
 import { HearingState } from '@/types/hearing';
 import { getDb } from '@/lib/mongo';
 
-export async function createHearing(state: HearingState): Promise<void>
+export const createHearing = async (state: HearingState): Promise<void> =>
 {
 	const db = await getDb();
 	await db.collection('hearings').replaceOne(
@@ -9,9 +9,9 @@ export async function createHearing(state: HearingState): Promise<void>
 		state,
 		{ upsert: true }
 	);
-}
+};
 
-export async function getHearing(hearingId: string): Promise<HearingState | null>
+export const getHearing = async (hearingId: string): Promise<HearingState | null> =>
 {
 	const db = await getDb();
 	const doc = await db.collection('hearings').findOne(
@@ -20,9 +20,9 @@ export async function getHearing(hearingId: string): Promise<HearingState | null
 	);
 	if(doc === null) return null;
 	return doc as unknown as HearingState;
-}
+};
 
-export async function updateHearing(state: HearingState): Promise<void>
+export const updateHearing = async (state: HearingState): Promise<void> =>
 {
 	await createHearing(state);
-}
+};

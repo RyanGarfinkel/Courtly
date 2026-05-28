@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth0 } from '@/lib/auth0';
 import { getDb } from '@/lib/mongo';
 
-export async function GET(request: NextRequest)
+export const GET = async (request: NextRequest) =>
 {
 	const { searchParams } = request.nextUrl;
 	const q = searchParams.get('q') ?? '';
@@ -72,9 +72,9 @@ export async function GET(request: NextRequest)
 	{
 		return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
 	}
-}
+};
 
-export async function POST(request: NextRequest)
+export const POST = async (request: NextRequest) =>
 {
 	try
 	{
@@ -104,4 +104,4 @@ export async function POST(request: NextRequest)
 	{
 		return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
 	}
-}
+};

@@ -3,7 +3,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 const MAX_RETRIES = 3;
 const MODEL = 'gemini-3.1-flash-lite-preview';
 
-export async function generateText(prompt: string): Promise<string>
+export const generateText = async (prompt: string): Promise<string> =>
 {
 	const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 	const model = genAI.getGenerativeModel({ model: MODEL });
@@ -26,4 +26,4 @@ export async function generateText(prompt: string): Promise<string>
 		}
 	}
 	throw new Error('Max retries exceeded');
-}
+};

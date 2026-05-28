@@ -2,10 +2,10 @@ import { getMatch, updateMatch } from '@/lib/services/multiplayerStore';
 import { NextRequest, NextResponse } from 'next/server';
 import { auth0 } from '@/lib/auth0';
 
-export async function POST(
+export const POST = async (
 	req: NextRequest,
 	{ params }: { params: Promise<{ match_id: string }> }
-)
+) =>
 {
 	const session = await auth0.getSession();
 	if(!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -61,4 +61,4 @@ export async function POST(
 		case_name: match.case_name,
 		match_id: match.match_id,
 	});
-}
+};

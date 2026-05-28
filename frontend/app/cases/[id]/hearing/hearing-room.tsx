@@ -1,7 +1,7 @@
 'use client';
 
-import { HearingMessage } from '@/types/hearing';
-import { useEffect, useState } from 'react';
+import { HearingMessage, UIJudge } from '@/types/hearing';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCase } from '@/contexts/case';
@@ -9,27 +9,49 @@ import { JUDGES } from './judges';
 import { API_URL } from '@/lib/api';
 import QuestionCard from './question-card';
 import CourtIntro from './court-intro';
+import NotesPanel from './notes-panel';
 import StressPanel from './stress-panel';
 import HintsPanel from './hints-panel';
 import ClerkPanel from './clerk-panel';
-import BenchArc from './bench-arc';
+import Bench3D from './bench-arc';
 import Lectern from './lectern';
+import Bubble from './bubble';
+
+interface PendingNoteContext
+{
+	message_id: string;
+	message_text: string;
+	speaker: string;
+}
 
 interface Props
 {
 	hearingId: string;
 	side: 'plaintiff' | 'defendant';
 	matchId?: string;
+	initialJudges?: UIJudge[];
+	userId?: string | null;
 }
 
-type Panel = 'hints' | 'stress' | 'clerk';
+type Panel = 'hints' | 'stress' | 'clerk' | 'notes';
 
 const JUSTICE_IDS = new Set(JUDGES.map(j => j.id));
+const TRANSCRIPT_LIMIT = 8;
+const TYPEWRITER_MS = 22;
 
-export default function HearingRoom({ hearingId, side, matchId }: Props)
+const toUIJudge = (j: typeof JUDGES[0]): UIJudge => ({
+	id: j.id,
+	name: j.name,
+	short: j.short,
+	philosophy: j.philosophy,
+	image: j.image,
+});
+
+export default function HearingRoom({ hearingId, side, matchId, initialJudges, userId }: Props)
 {
 	const case_ = useCase();
 	const router = useRouter();
+
 	const [messages, setMessages] = useState<HearingMessage[]>([]);
 	const [phase, setPhase] = useState('interrogation_user');
 	const [turn, setTurn] = useState(1);
@@ -39,6 +61,19 @@ export default function HearingRoom({ hearingId, side, matchId }: Props)
 	const [courtCalled, setCourtCalled] = useState(false);
 	const [draft, setDraft] = useState('');
 	const [openPanel, setOpenPanel] = useState<Panel | null>(null);
+	const [judges, setJudges] = useState<UIJudge[]>(initialJudges ?? JUDGES.map(toUIJudge));
+	const [displayedQuestion, setDisplayedQuestion] = useState('');
+	const [isAnimating, setIsAnimating] = useState(false);
+	const [pendingNoteContext, setPendingNoteContext] = useState<PendingNoteContext | null>(null);
+
+	const onAddNote = useCallback((messageId: string, messageText: string, speaker: string) =>
+	{
+		setPendingNoteContext({ message_id: messageId, message_text: messageText, speaker });
+		setOpenPanel('notes');
+	}, []);
+
+	const animIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+	const transcriptEndRef = useRef<HTMLDivElement>(null);
 
 	useEffect(() =>
 	{
@@ -46,17 +81,57 @@ export default function HearingRoom({ hearingId, side, matchId }: Props)
 		if(stored)
 		{
 			const data = JSON.parse(stored);
-			setMessages(data.messages ?? []);
+			const storedMsgs: HearingMessage[] = data.messages ?? [];
+			setMessages(storedMsgs);
 			setPhase(data.phase ?? 'interrogation_user');
 			setTurn(data.turn ?? 1);
 			setTotalTurns(data.total_turns ?? 4);
+
+			if(data.judges && Array.isArray(data.judges))
+				setJudges(data.judges);
+
+			const lastQ = [...storedMsgs].reverse().find(
+				m => (JUSTICE_IDS.has(m.speaker_id) || m.speaker_id === 'court') && m.type === 'question'
+			);
+			if(lastQ)
+				setDisplayedQuestion(lastQ.content);
 		}
 		setInitialized(true);
 	}, [hearingId]);
 
-	async function handleSubmit()
+	const startTypewriter = useCallback((text: string) =>
 	{
-		if(!draft.trim() || loading) return;
+		if(animIntervalRef.current) clearInterval(animIntervalRef.current);
+
+		setDisplayedQuestion('');
+		setIsAnimating(true);
+
+		let index = 0;
+		animIntervalRef.current = setInterval(() =>
+		{
+			index++;
+			setDisplayedQuestion(text.slice(0, index));
+
+			if(index >= text.length)
+			{
+				clearInterval(animIntervalRef.current!);
+				animIntervalRef.current = null;
+				setIsAnimating(false);
+			}
+		}, TYPEWRITER_MS);
+	}, []);
+
+	useEffect(() =>
+	{
+		return () =>
+		{
+			if(animIntervalRef.current) clearInterval(animIntervalRef.current);
+		};
+	}, []);
+
+	const handleSubmit = useCallback(async () =>
+	{
+		if(!draft.trim() || loading || isAnimating) return;
 
 		const response = draft.trim();
 		setDraft('');
@@ -66,11 +141,12 @@ export default function HearingRoom({ hearingId, side, matchId }: Props)
 			speaker: 'You',
 			speaker_id: 'user',
 			content: response,
-			type: 'statement'
+			type: 'statement',
 		};
 
 		setMessages(prev => [...prev, userMsg]);
 		setLoading(true);
+		setDisplayedQuestion('');
 
 		try
 		{
@@ -84,22 +160,25 @@ export default function HearingRoom({ hearingId, side, matchId }: Props)
 
 			const data = await res.json();
 
+			const newMsgs: HearingMessage[] = data.messages ?? [];
+
 			setMessages(prev =>
 			{
 				const filtered = prev.filter(m => !m.id.startsWith('temp-'));
-				return [...filtered, ...data.messages];
+				const updatedMsgs = [...filtered, ...newMsgs];
+				sessionStorage.setItem(`hearing_${hearingId}`, JSON.stringify({
+					messages: updatedMsgs,
+					phase: data.phase,
+					turn: data.turn ?? turn,
+					total_turns: totalTurns,
+					ruling: data.ruling,
+					judges,
+				}));
+				return updatedMsgs;
 			});
 
 			setPhase(data.phase);
 			setTurn(data.turn ?? turn);
-
-			sessionStorage.setItem(`hearing_${hearingId}`, JSON.stringify({
-				messages: [...messages, ...data.messages],
-				phase: data.phase,
-				turn: data.turn ?? turn,
-				total_turns: totalTurns,
-				ruling: data.ruling
-			}));
 
 			if(data.ruling)
 			{
@@ -107,19 +186,55 @@ export default function HearingRoom({ hearingId, side, matchId }: Props)
 					? `/match/${matchId}/results`
 					: `/cases/${case_.id}/hearing/results?hearing_id=${hearingId}&side=${side}`;
 				router.push(dest);
+				return;
+			}
+
+			const newQuestion = [...newMsgs].reverse().find(
+				m => (JUSTICE_IDS.has(m.speaker_id) || m.speaker_id === 'court') && m.type === 'question'
+			);
+
+			if(newQuestion)
+			{
+				setLoading(false);
+				startTypewriter(newQuestion.content);
+			}
+			else
+			{
+				setLoading(false);
 			}
 		}
-		finally
+		catch
 		{
 			setLoading(false);
 		}
-	}
+	}, [draft, loading, isAnimating, hearingId, turn, totalTurns, judges, matchId, case_.id, side, router, startTypewriter]);
+
+	useEffect(() =>
+	{
+		function onKeyDown(e: KeyboardEvent)
+		{
+			if(e.key === 'Escape')
+			{
+				setOpenPanel(null);
+				return;
+			}
+			if(e.key === 'Enter' && (e.metaKey || e.ctrlKey))
+				handleSubmit();
+		}
+		window.addEventListener('keydown', onKeyDown);
+		return () => window.removeEventListener('keydown', onKeyDown);
+	}, [handleSubmit]);
+
+	useEffect(() =>
+	{
+		transcriptEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+	}, [messages, displayedQuestion]);
 
 	if(!initialized)
 	{
 		return (
 			<div className="flex flex-col gap-4 flex-1 p-8">
-				<Skeleton className="h-56 w-full" />
+				<Skeleton className="h-36 w-full" />
 				<Skeleton className="h-24 w-3/4 mx-auto" />
 				<Skeleton className="h-36 w-full mt-auto" />
 			</div>
@@ -132,6 +247,7 @@ export default function HearingRoom({ hearingId, side, matchId }: Props)
 			<CourtIntro
 				side={side}
 				onBegin={() => setCourtCalled(true)}
+				judges={judges}
 			/>
 		);
 	}
@@ -143,53 +259,88 @@ export default function HearingRoom({ hearingId, side, matchId }: Props)
 	const lastQuestion = [...messages].reverse().find(
 		m => (JUSTICE_IDS.has(m.speaker_id) || m.speaker_id === 'court') && m.type === 'question'
 	);
+	const currentSpeaker = lastQuestion?.speaker ?? null;
+	const currentSpeakerId = lastQuestion?.speaker_id ?? null;
+	const currentType = lastQuestion?.type;
+
 	const pendingQuestion = lastQuestion
 		? { id: lastQuestion.id, speaker: lastQuestion.speaker, content: lastQuestion.content }
 		: null;
 
-	const currentSpeaker = lastQuestion?.speaker ?? null;
-	const currentSpeakerId = lastQuestion?.speaker_id ?? null;
-	const currentQuestionContent = lastQuestion?.content ?? null;
+	const pastMessages = messages.slice(-TRANSCRIPT_LIMIT).filter(
+		m => m.id !== lastQuestion?.id
+	);
+
+	const lecternVisible = !isAnimating && !loading;
 
 	return (
-		<div className="flex flex-row h-full w-full overflow-hidden">
-			<div className="flex-1 flex flex-col min-w-0 relative">
-				<BenchArc activeSpeakerId={activeSpeakerId} spokenIds={spokenIds} />
+		<div className="flex h-full w-full overflow-hidden">
+			<div className="flex-1 flex flex-col min-w-0">
+				<Bench3D
+					judges={judges}
+					activeSpeakerId={activeSpeakerId}
+					spokenIds={spokenIds}
+					loading={loading}
+				/>
 
-				<div className="flex-1 flex flex-col items-center justify-center px-8 py-4 gap-6 overflow-hidden">
-					<QuestionCard
-						speaker={currentSpeaker}
-						speakerId={currentSpeakerId}
-						content={currentQuestionContent}
-						loading={loading}
-						phase={phase}
-					/>
+				<div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+					<div className="flex-1 overflow-y-auto px-6 pt-4 pb-2">
+						<div className="max-w-2xl mx-auto flex flex-col gap-1">
+							{pastMessages.map(m => (
+								<Bubble key={m.id} message={m} onAddNote={userId ? onAddNote : undefined} />
+							))}
+							<div ref={transcriptEndRef} />
+						</div>
+					</div>
 
-					<div className="flex items-end justify-between w-full max-w-2xl">
-						<AttorneyAvatar label={side === 'plaintiff' ? 'Petitioner (You)' : 'Respondent (You)'} />
-						<AttorneyAvatar label={side === 'plaintiff' ? 'Respondent' : 'Petitioner'} dim />
+					<div className="px-6 py-4 shrink-0">
+						<QuestionCard
+							displayedQuestion={displayedQuestion}
+							speaker={currentSpeaker}
+							speakerId={currentSpeakerId}
+							isAnimating={isAnimating}
+							phase={phase}
+							loading={loading && !displayedQuestion}
+							type={currentType}
+						/>
 					</div>
 				</div>
 
-				<div className="shrink-0 py-5 px-8 relative">
-					<div className="max-w-2xl mx-auto">
-						<Lectern
-							draft={draft}
-							onDraftChange={setDraft}
-							onSubmit={handleSubmit}
-							onHint={() => setOpenPanel('hints')}
-							onStressTest={() => setOpenPanel('stress')}
-							loading={loading}
-							phase={phase}
-						/>
-					</div>
-					<div className="absolute right-8 top-0 bottom-0 flex items-center">
-						<ClerkBadge onClick={() => setOpenPanel('clerk')} />
-					</div>
+				<div
+					className={`shrink-0 transition-all duration-500 ${
+						lecternVisible
+							? 'translate-y-0 opacity-100 lectern-visible'
+							: 'translate-y-4 opacity-0 pointer-events-none'
+					}`}
+				>
+					<Lectern
+						draft={draft}
+						onDraftChange={setDraft}
+						onSubmit={handleSubmit}
+						onStressTest={() => setOpenPanel('stress')}
+						onClerk={() => setOpenPanel('clerk')}
+						onNotes={userId ? () => setOpenPanel('notes') : undefined}
+						loading={loading}
+						phase={phase}
+						visible={lecternVisible}
+					/>
 				</div>
 			</div>
 
-			<div className={`overflow-hidden transition-all duration-300 ease-in-out border-l border-border shrink-0 ${openPanel ? 'w-80' : 'w-0'}`}>
+			<div
+				className={`overflow-hidden transition-all duration-300 ease-in-out border-l border-border shrink-0 ${
+					openPanel ? 'w-80' : 'w-0'
+				}`}
+			>
+				{openPanel === 'notes' && (
+					<NotesPanel
+						hearingId={hearingId}
+						caseId={case_.id}
+						onClose={() => setOpenPanel(null)}
+						pendingContext={pendingNoteContext}
+						onClearPending={() => setPendingNoteContext(null)}
+					/>
+				)}
 				{openPanel === 'hints' && (
 					<HintsPanel
 						open={openPanel === 'hints'}
@@ -214,49 +365,6 @@ export default function HearingRoom({ hearingId, side, matchId }: Props)
 					/>
 				)}
 			</div>
-		</div>
-	);
-}
-
-function PersonIcon()
-{
-	return (
-		<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-			<circle cx="12" cy="8" r="4" />
-			<path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
-		</svg>
-	);
-}
-
-function AttorneyAvatar({ label, dim }: { label: string; dim?: boolean })
-{
-	return (
-		<div className="flex flex-col items-center gap-1.5">
-			<div className={`w-10 h-10 rounded-full border border-border flex items-center justify-center transition-opacity ${dim ? 'bg-muted/30 text-muted-foreground/40 opacity-50' : 'bg-muted/60 text-muted-foreground'}`}>
-				<PersonIcon />
-			</div>
-			<span className="text-[10px] text-muted-foreground whitespace-nowrap">{label}</span>
-		</div>
-	);
-}
-
-function ClerkBadge({ onClick }: { onClick: () => void })
-{
-	return (
-		<div className="shrink-0 flex flex-col items-center gap-2">
-			<div className="w-9 h-9 rounded-full bg-muted/60 border border-border flex items-center justify-center text-muted-foreground">
-				<PersonIcon />
-			</div>
-			<button
-				onClick={onClick}
-				className="flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-border text-[11px] font-medium text-muted-foreground hover:text-foreground hover:border-foreground/40 hover:bg-muted/30 transition-colors"
-				title="Ask the clerk"
-			>
-				<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-					<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-				</svg>
-				Clerk
-			</button>
 		</div>
 	);
 }

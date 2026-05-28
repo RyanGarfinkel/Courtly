@@ -1,16 +1,16 @@
 const BASE_URL = 'https://www.courtlistener.com/api/rest/v4';
 
-function getToken(): string
+const getToken = (): string =>
 {
 	const token = process.env.COURTLISTENER_API_TOKEN;
 	if(!token) throw new Error('COURTLISTENER_API_TOKEN is not set');
 	return token;
-}
+};
 
-export async function searchOpinions(
+export const searchOpinions = async (
 	query: string,
 	options?: { court?: string; limit?: number; offset?: number }
-): Promise<any[]>
+): Promise<any[]> =>
 {
 	const court = options?.court ?? 'scotus';
 	const limit = options?.limit ?? 5;
@@ -32,9 +32,9 @@ export async function searchOpinions(
 		console.error('courtlistener searchOpinions error:', e);
 		return [];
 	}
-}
+};
 
-export async function getClusterJudges(absoluteUrl: string): Promise<string[] | null>
+export const getClusterJudges = async (absoluteUrl: string): Promise<string[] | null> =>
 {
 	const match = absoluteUrl.match(/\/opinion\/(\d+)\//);
 	if(!match) return null;
@@ -55,4 +55,4 @@ export async function getClusterJudges(absoluteUrl: string): Promise<string[] | 
 		console.error('courtlistener getClusterJudges error:', e);
 		return null;
 	}
-}
+};

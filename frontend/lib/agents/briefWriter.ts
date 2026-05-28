@@ -1,6 +1,6 @@
 import { generateText } from '@/lib/gemini';
 
-export async function draft(
+export const draft = async (
 	caseName: string,
 	caseSummary: string,
 	category: string,
@@ -8,7 +8,7 @@ export async function draft(
 	citation: string,
 	side: string = 'plaintiff',
 	userNotes: string = ''
-): Promise<string>
+): Promise<string> =>
 {
 	const notesSection = userNotes.trim()
 		? `\n\nAttorney's notes / position:\n${userNotes}`
@@ -20,6 +20,8 @@ Case: ${caseName} (${citation}, ${year})
 Category: ${category}
 Background: ${caseSummary}${notesSection}
 
+IMPORTANT TEMPORAL CONSTRAINT: You are writing this brief as if it is being submitted in ${year}. Do not cite any cases decided after ${year}. Do not reference ${caseName} as a precedent — it is the case currently before the court, not settled law.
+
 The attorney is arguing as the ${role}. Provide hints about the strongest legal arguments available to the ${role}, structured as:
 1. Core legal theory and how it applies to this case
 2. Key precedents or constitutional principles that support the ${role}'s position
@@ -27,24 +29,26 @@ The attorney is arguing as the ${role}. Provide hints about the strongest legal 
 
 Write in short, concise bullet point form (between 5-10 bullet points, each one sentence). Do not include any header and get straight to the bullet points. Be specific to the ${role}'s position.`;
 	return generateText(prompt);
-}
+};
 
-export async function expandNotes(
+export const expandNotes = async (
 	content: string,
 	caseName: string,
 	caseSummary: string
-): Promise<string>
+): Promise<string> =>
 {
 	const prompt = `You are a skilled appellate attorney turning notes into a formal legal brief.
 Case: ${caseName}
 Background: ${caseSummary}
 The attorney has written the following notes or bullet points:
 ${content}
-Expand these into a compelling, formal legal argument. Maintain the attorney's core positions but develop each point with legal reasoning, constitutional analysis, and persuasive language. Write 3-5 paragraphs in formal appellate prose. Do not introduce arguments not suggested by the notes.`;
-	return generateText(prompt);
-}
+Expand these into a compelling, formal legal argument. Maintain the attorney's core positions but develop each point with legal reasoning, constitutional analysis, and persuasive language. Write 3-5 paragraphs in formal appellate prose. Do not introduce arguments not suggested by the notes.
 
-export async function strengthen(content: string, caseName: string): Promise<string>
+Write as if arguing at the time of the case's original argument. Do not reference future developments in the law.`;
+	return generateText(prompt);
+};
+
+export const strengthen = async (content: string, caseName: string): Promise<string> =>
 {
 	const prompt = `You are a senior appellate attorney reviewing a legal brief before oral argument.
 Case: ${caseName}
@@ -55,17 +59,21 @@ Improve it by:
 - Adding specific constitutional provisions or precedents where appropriate
 - Making the language more precise and persuasive
 - Removing weak or redundant passages
-Return only the improved argument text, same approximate length.`;
-	return generateText(prompt);
-}
+Return only the improved argument text, same approximate length.
 
-export async function counterarguments(content: string, caseName: string): Promise<string>
+Write as if arguing at the time of the case's original argument. Do not reference future developments in the law.`;
+	return generateText(prompt);
+};
+
+export const counterarguments = async (content: string, caseName: string): Promise<string> =>
 {
 	const prompt = `You are a law clerk preparing an attorney for oral argument before the Supreme Court.
 Case: ${caseName}
 The attorney's argument is:
 ${content}
 Identify the 3-4 strongest counterarguments the opposing side or skeptical justices might raise. For each, briefly explain the argument and how the attorney might respond.
-Format as a numbered list. Be specific and realistic.`;
+Format as a numbered list. Be specific and realistic.
+
+Write as if arguing at the time of the case's original argument. Do not reference future developments in the law.`;
 	return generateText(prompt);
-}
+};

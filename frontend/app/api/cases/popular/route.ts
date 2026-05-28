@@ -2,7 +2,7 @@ import { seedIfEmpty, clSearch, caseId, mapCl } from '@/lib/services/caseService
 import { NextRequest, NextResponse } from 'next/server';
 import { getDb } from '@/lib/mongo';
 
-export async function GET(request: NextRequest)
+export const GET = async (request: NextRequest) =>
 {
 	const { searchParams } = request.nextUrl;
 	const raw = parseInt(searchParams.get('limit') ?? '6', 10);
@@ -26,4 +26,4 @@ export async function GET(request: NextRequest)
 		console.error('[/api/cases/popular]', e);
 		return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
 	}
-}
+};

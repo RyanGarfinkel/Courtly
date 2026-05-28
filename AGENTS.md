@@ -14,6 +14,21 @@ Hosting and external platform details are documented in [.github/instructions/in
 
 ---
 
+## Code Style
+
+These rules apply to every file written or modified in this project.
+
+- **Single quotes** everywhere — strings, imports, JSX attributes
+- **Imports sorted longest to shortest** by total character length of the full import line
+- **`const X = () => {}`** for all functions — components, helpers, everything. Exported components use `const X = () => {}; export default X;` instead of `export default function X()`
+- **Opening brace on a new line** for function and arrow function bodies — except one-liners: `const x = () => value;` is fine
+- **No space between `if` and `(`** — write `if(condition)` not `if (condition)`
+- **Tabs** for indentation, not spaces
+- **Blank line** between functions/methods
+- **`'use client';`** on line 1 when required, followed by a blank line, then imports
+
+---
+
 ## Overview
 
 This project implements an **Adversarial AI Legal Decision Engine** that puts the user at the lectern of a simulated Supreme Court. They research a case, write a brief, argue before a panel of 9 AI judges with distinct philosophies, survive cross-examination, and receive a binding ruling with full opinions.
@@ -73,16 +88,21 @@ Write the API contract (request/response shapes) before spawning agents — that
 - Swing justice identification on ruling
 
 ### Frontend
-- **Dashboard** — case grid with active cases
+- **Dashboard** — case grid with active cases, saved/custom case carousels, match list
 - **Case overview** — case summary with side selection (plaintiff/defendant), brief workspace
-- **Brief workspace** — AI panel, research panel, brief editor
+- **Brief workspace** — AI panel, research panel, tiptap rich-text brief editor
 - **Hearing room** — full oral argument interface:
   - `CourtIntro` — pre-argument staging screen with bench layout and oyez ceremony
-  - `BenchHeader` — 9 justice avatars with active/spoken state
+  - `BenchHeader` — 9 justice avatars with active/spoken state and disposition coloring
   - `Bubble` — message rendering with judge philosophy labels
   - `ResponseStudio` — draft input with stress test and hint tools
-  - `AssistantPanel` — law clerk research panel
+  - `AssistantPanel` — law clerk research panel (proactive intelligence, not on-demand)
   - `RulingPanel` — result, score bars, majority opinion, concurrences, dissents, swing justices
+  - **Bench asides** — overheard 1–2 line exchanges between non-active justices after each user response (implemented)
+  - **Press mechanic** — 40% chance same judge presses counsel with a follow-up when score ≤ 0 (implemented)
+  - **Ruling ceremony** — sequential vote reveal with swing justice spotlight (implemented)
+- **Historical judges** — 9 AI judge personas with distinct philosophies seeded into MongoDB (`judges` collection)
+- **Judicial record** — per-user win/loss and performance tracking linked to Auth0 identity (in progress)
 
 ### Data Storage
 - **MongoDB** is the primary runtime data store — all case lookups hit the `cases` collection first
@@ -242,6 +262,52 @@ After a ruling, show the user's brief side-by-side with a "model brief" generate
 
 ### 8. Moot Court History
 Every argument is stored with full transcript. Users can share a read-only link to their case record: "Here is my argument in *Gonzales v. Raich* — 6-3 ruling in my favor." This is a social/portfolio mechanic that spreads the product organically and justifies auth.
+
+---
+
+## UI Design System
+
+### Direction: "The Chamber"
+The product aesthetic is institutional, editorial, and judicial — not SaaS. Every screen should feel like entering a formal institution of consequence. Reference: *New York Times* crossed with the Library of Congress. Judicial gravity, editorial clarity, deliberate whitespace.
+
+### Typography
+- **Playfair Display** (`font-heading`, `--font-heading`) for all major headings (h1, h2), case names, section titles, stat numbers
+- **Lora** (`--font-sans`) for body reading text, italic quotes, editorial prose
+- Case names in Playfair Display read like newspaper headlines — that's the intent
+
+### Colors
+- `--background` (`oklch(0.97 0.012 85)`) — light cream for all browse/research screens
+- `--foreground` (`oklch(0.13 0.015 265)`) — deep navy for all primary text
+- `--primary` (`oklch(0.22 0.06 265)`) — dark navy for primary CTAs and power actions
+- `--accent` (`oklch(0.40 0.14 15)`) — crimson; use ONLY for verdicts, affirmed/reversed states, and dramatic power moments. Use sparingly.
+- `--muted-foreground` — for secondary labels, small caps, metadata
+- The landing page hero uses `oklch(0.13 0.015 265)` (same as `--foreground`) as a dark background with white text
+
+### 3D Bench
+- **Landing page**: CSS `perspective: 900px` + `rotateX(14deg)` on the judge row container creates the illusion of looking up at an elevated bench. Parabolic arc `y = 72 - 32 * 4 * t * (1 - t)` positions justices highest in center.
+- **Hearing room**: handled separately by `bench-arc.tsx` — do not modify
+
+### Component Philosophy
+- `rounded-sm` or `rounded` only — never `rounded-xl` or `rounded-2xl` for cards/buttons
+- Thin borders (`border-border`) over heavy shadows
+- Editorial spacing — generous padding, breathing room, `max-w-4xl` content columns
+- No filled card backgrounds unless necessary — prefer subtle border-only containers
+- Hover states use `transition-colors` or `transition-opacity`, not scale transforms on page elements
+- Scale transforms only on small avatars/icons
+
+### Utility Classes (globals.css)
+- `.animate-fade-in` — `fadeIn 0.7s ease-out forwards`, with `prefers-reduced-motion` override
+- `.section-rule` — 1px horizontal editorial divider, `margin: 2rem 0`
+- `.case-headline` — `clamp(1.75rem, 4vw, 3rem)`, Playfair Display, `font-weight: 700`, `letter-spacing: -0.02em`
+- `.label-caps` — `0.625rem`, `letter-spacing: 0.25em`, uppercase, `font-weight: 600` — use for section headers, metadata labels
+
+### Page Architecture
+- **Landing page** (`/app/page.tsx`): dark hero + light features section, no layout chrome
+- **Dashboard** (`/app/dashboard/`): light cream, editorial case list rows, record strip, nav header in `layout.tsx`
+- **Case overview** (`/app/cases/[id]/page.tsx`): full-width serif headline, two-panel side selection at bottom
+- **Brief workspace** (`/app/cases/[id]/brief/`): clean editor + collapsible right panel
+- **Hearing room** (`/app/cases/[id]/hearing/`): dark-themed, fully isolated — all other pages are light
+- **Transcript** (`/app/transcripts/`): official court document aesthetic, score box, opinions section
 
 ---
 

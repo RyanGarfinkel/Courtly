@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { auth0 } from '@/lib/auth0';
 import { getDb } from '@/lib/mongo';
 
-export async function GET()
+export const GET = async () =>
 {
 	const session = await auth0.getSession();
 	if(!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -27,4 +27,4 @@ export async function GET()
 	{
 		return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
 	}
-}
+};
