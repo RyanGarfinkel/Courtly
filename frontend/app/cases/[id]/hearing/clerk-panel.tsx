@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { HearingMessage } from '@/types/hearing';
 import AssistantPanel from './assistant-panel';
 import SidePanel from './side-panel';
-import { JUDGES } from './judges';
 import { cn } from '@/lib/utils';
 
 interface Props
@@ -13,18 +12,17 @@ interface Props
 	hearingId: string;
 	pendingQuestion: { id: string; speaker: string; content: string } | null;
 	messages: HearingMessage[];
+	judgeIds: Set<string>;
 }
 
 type Tab = 'clerk' | 'history';
 
-const JUSTICE_IDS = new Set(JUDGES.map(j => j.id));
-
-export default function ClerkPanel({ onClose, hearingId, pendingQuestion, messages }: Props)
+export default function ClerkPanel({ onClose, hearingId, pendingQuestion, messages, judgeIds }: Props)
 {
 	const [tab, setTab] = useState<Tab>('clerk');
 
 	const history = messages.filter(
-		m => (JUSTICE_IDS.has(m.speaker_id) && m.type === 'question') || m.speaker_id === 'user'
+		m => (judgeIds.has(m.speaker_id) && m.type === 'question') || m.speaker_id === 'user'
 	);
 
 	return (

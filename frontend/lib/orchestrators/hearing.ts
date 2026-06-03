@@ -5,7 +5,7 @@ import { HearingState, HearingMessage, HearingRuling, CombinedRuling, JudgeConfi
 import { JUDGES, getJudgeById } from '@/lib/judges';
 import { evaluate } from '@/lib/agents/scorer';
 
-const PREFERRED_QUESTIONER_IDS = ['john_roberts', 'sonia_sotomayor', 'elena_kagan', 'stephen_breyer', 'hale', 'voss', 'crane', 'lim'];
+const PREFERRED_QUESTIONER_IDS = ['john_roberts', 'sonia_sotomayor', 'elena_kagan', 'ketanji_jackson', 'brett_kavanaugh', 'neil_gorsuch', 'william_brennan', 'thurgood_marshall', 'william_rehnquist'];
 const TOTAL_TURNS = 4;
 
 const resolveJudge = (id: string): JudgeConfig =>

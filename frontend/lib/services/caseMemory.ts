@@ -33,3 +33,9 @@ export const getCachedResearch = async (caseId: string): Promise<any[] | null> =
 	const doc = await db.collection('research').findOne({ case_id: caseId }, { projection: { _id: 0 } });
 	return doc ? (doc.sources as any[]) : null;
 };
+
+export const clearResearch = async (caseId: string): Promise<void> =>
+{
+	const db = await getDb();
+	await db.collection('research').deleteOne({ case_id: caseId });
+};

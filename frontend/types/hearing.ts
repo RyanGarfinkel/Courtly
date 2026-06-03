@@ -2,8 +2,10 @@ export interface JudgeConfig
 {
 	id: string;
 	name: string;
+	short?: string;
 	philosophy: string;
 	system_prompt: string;
+	image?: string;
 }
 
 export interface UIJudge

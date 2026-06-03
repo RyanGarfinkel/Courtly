@@ -591,6 +591,15 @@ export const getHistoricalJudgeConfig = (id: string): JudgeConfig | undefined =>
 	};
 };
 
+export const getAllHistoricalUIJudges = (): UIJudge[] =>
+	HISTORICAL_JUSTICES.map(j => ({
+		id: j.id,
+		name: j.name,
+		short: j.short,
+		philosophy: j.philosophy,
+		image: j.image,
+	}));
+
 export const getHistoricalUIJudge = (id: string): UIJudge =>
 {
 	const justice = JUSTICE_MAP[id];

@@ -5,7 +5,7 @@ import { useEffect, useState, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCase } from '@/contexts/case';
-import { JUDGES } from './judges';
+import { JUDGES, JUDGE_MAP } from './judges';
 import { API_URL } from '@/lib/api';
 import QuestionCard from './question-card';
 import CourtIntro from './court-intro';
@@ -35,17 +35,9 @@ interface Props
 
 type Panel = 'hints' | 'stress' | 'clerk' | 'notes';
 
-const JUSTICE_IDS = new Set(JUDGES.map(j => j.id));
 const TRANSCRIPT_LIMIT = 8;
 const TYPEWRITER_MS = 22;
 
-const toUIJudge = (j: typeof JUDGES[0]): UIJudge => ({
-	id: j.id,
-	name: j.name,
-	short: j.short,
-	philosophy: j.philosophy,
-	image: j.image,
-});
 
 export default function HearingRoom({ hearingId, side, matchId, initialJudges, userId }: Props)
 {
@@ -61,7 +53,7 @@ export default function HearingRoom({ hearingId, side, matchId, initialJudges, u
 	const [courtCalled, setCourtCalled] = useState(false);
 	const [draft, setDraft] = useState('');
 	const [openPanel, setOpenPanel] = useState<Panel | null>(null);
-	const [judges, setJudges] = useState<UIJudge[]>(initialJudges ?? JUDGES.map(toUIJudge));
+	const [judges, setJudges] = useState<UIJudge[]>(initialJudges ?? JUDGES);
 	const [displayedQuestion, setDisplayedQuestion] = useState('');
 	const [isAnimating, setIsAnimating] = useState(false);
 	const [pendingNoteContext, setPendingNoteContext] = useState<PendingNoteContext | null>(null);
@@ -91,7 +83,7 @@ export default function HearingRoom({ hearingId, side, matchId, initialJudges, u
 				setJudges(data.judges);
 
 			const lastQ = [...storedMsgs].reverse().find(
-				m => (JUSTICE_IDS.has(m.speaker_id) || m.speaker_id === 'court') && m.type === 'question'
+				m => (JUDGE_MAP[m.speaker_id] !== undefined || m.speaker_id === 'court') && m.type === 'question'
 			);
 			if(lastQ)
 				setDisplayedQuestion(lastQ.content);
@@ -190,7 +182,7 @@ export default function HearingRoom({ hearingId, side, matchId, initialJudges, u
 			}
 
 			const newQuestion = [...newMsgs].reverse().find(
-				m => (JUSTICE_IDS.has(m.speaker_id) || m.speaker_id === 'court') && m.type === 'question'
+				m => (JUDGE_MAP[m.speaker_id] !== undefined || m.speaker_id === 'court') && m.type === 'question'
 			);
 
 			if(newQuestion)
@@ -252,12 +244,14 @@ export default function HearingRoom({ hearingId, side, matchId, initialJudges, u
 		);
 	}
 
-	const lastJusticeMsg = [...messages].reverse().find(m => JUSTICE_IDS.has(m.speaker_id));
+	const judgeIds = new Set(judges.map(j => j.id));
+
+	const lastJusticeMsg = [...messages].reverse().find(m => judgeIds.has(m.speaker_id));
 	const activeSpeakerId = lastJusticeMsg?.speaker_id ?? null;
-	const spokenIds = new Set(messages.filter(m => JUSTICE_IDS.has(m.speaker_id)).map(m => m.speaker_id));
+	const spokenIds = new Set(messages.filter(m => judgeIds.has(m.speaker_id)).map(m => m.speaker_id));
 
 	const lastQuestion = [...messages].reverse().find(
-		m => (JUSTICE_IDS.has(m.speaker_id) || m.speaker_id === 'court') && m.type === 'question'
+		m => (judgeIds.has(m.speaker_id) || m.speaker_id === 'court') && m.type === 'question'
 	);
 	const currentSpeaker = lastQuestion?.speaker ?? null;
 	const currentSpeakerId = lastQuestion?.speaker_id ?? null;
@@ -317,6 +311,7 @@ export default function HearingRoom({ hearingId, side, matchId, initialJudges, u
 						draft={draft}
 						onDraftChange={setDraft}
 						onSubmit={handleSubmit}
+						onHints={() => setOpenPanel('hints')}
 						onStressTest={() => setOpenPanel('stress')}
 						onClerk={() => setOpenPanel('clerk')}
 						onNotes={userId ? () => setOpenPanel('notes') : undefined}
@@ -362,6 +357,7 @@ export default function HearingRoom({ hearingId, side, matchId, initialJudges, u
 						hearingId={hearingId}
 						pendingQuestion={pendingQuestion}
 						messages={messages}
+						judgeIds={judgeIds}
 					/>
 				)}
 			</div>

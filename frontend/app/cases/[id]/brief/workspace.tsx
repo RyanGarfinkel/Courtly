@@ -224,7 +224,7 @@ const Workspace = ({ initialDraft, side, matchId }: Props) =>
 									<TabsTrigger value='ai' className='flex-1 rounded-sm text-xs'>AI Assistant</TabsTrigger>
 								</TabsList>
 								<TabsContent value='research' className='mt-4'>
-									<ResearchPanel caseId={c.id} caseName={c.name} />
+									<ResearchPanel caseId={c.id} caseName={c.name} caseYear={c.year} />
 								</TabsContent>
 								<TabsContent value='ai' className='mt-4'>
 									<AiPanel editor={editor} side={side} />

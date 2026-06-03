@@ -66,7 +66,11 @@ export const POST = async (req: NextRequest) =>
 			phase: state.phase,
 			turn: state.turn,
 			total_turns: state.total_turns,
-			judges: judges.map(j => getHistoricalUIJudge(j.id)),
+			judges: judges.map(j =>
+				j.short
+					? { id: j.id, name: j.name, short: j.short, philosophy: j.philosophy, image: j.image }
+					: getHistoricalUIJudge(j.id)
+			),
 		});
 	}
 	catch(err)

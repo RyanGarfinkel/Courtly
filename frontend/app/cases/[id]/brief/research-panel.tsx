@@ -26,21 +26,24 @@ interface Props
 {
 	caseId: string;
 	caseName: string;
+	caseYear?: number;
 }
 
-const ResearchPanel = ({ caseId, caseName }: Props) =>
+const ResearchPanel = ({ caseId, caseName, caseYear }: Props) =>
 {
 	const [sources, setSources] = useState<LegalSource[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState(false);
 
-	const loadResearch = useCallback(async () =>
+	const loadResearch = useCallback(async (force = false) =>
 	{
 		setLoading(true);
 		setError(false);
 		try
 		{
-			const res = await fetch(`${API_URL}/research?case_id=${encodeURIComponent(caseId)}&q=${encodeURIComponent(caseName)}`);
+			const yearParam = caseYear ? `&year=${caseYear}` : '';
+			const url = `${API_URL}/research?case_id=${encodeURIComponent(caseId)}&q=${encodeURIComponent(caseName)}${yearParam}${force ? '&force=true' : ''}`;
+			const res = await fetch(url);
 			if(!res.ok) throw new Error();
 			setSources(await res.json());
 		}
@@ -78,7 +81,7 @@ const ResearchPanel = ({ caseId, caseName }: Props) =>
 		return (
 			<div className='flex flex-col items-center justify-center py-10 gap-3 text-center'>
 				<p className='text-sm text-muted-foreground'>Failed to load research.</p>
-				<Button variant='outline' size='sm' onClick={loadResearch}>Try again</Button>
+				<Button variant='outline' size='sm' onClick={() => loadResearch(true)}>Try again</Button>
 			</div>
 		);
 	}
@@ -88,7 +91,7 @@ const ResearchPanel = ({ caseId, caseName }: Props) =>
 		return (
 			<div className='flex flex-col items-center justify-center py-10 gap-3 text-center'>
 				<p className='text-sm text-muted-foreground'>No citations found for this case.</p>
-				<Button variant='outline' size='sm' onClick={loadResearch}>Try again</Button>
+				<Button variant='outline' size='sm' onClick={() => loadResearch(true)}>Try again</Button>
 			</div>
 		);
 	}
@@ -97,7 +100,7 @@ const ResearchPanel = ({ caseId, caseName }: Props) =>
 		<div className='flex flex-col gap-2'>
 			<div className='flex items-center justify-between mb-1'>
 				<p className='text-xs text-muted-foreground'>{sources.length} sources found</p>
-				<Button variant='ghost' size='sm' onClick={loadResearch}>Refresh</Button>
+				<Button variant='ghost' size='sm' onClick={() => loadResearch(true)}>Refresh</Button>
 			</div>
 
 			<Accordion type='multiple' className='flex flex-col gap-2'>
