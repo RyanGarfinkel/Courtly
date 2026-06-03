@@ -36,14 +36,7 @@ export default function QuestionCard({ displayedQuestion, speaker, speakerId, is
 		);
 	}
 
-	if(!displayedQuestion && !loading)
-	{
-		return (
-			<div className="w-full max-w-2xl mx-auto py-4 text-center">
-				<p className="text-sm text-muted-foreground italic">Awaiting the bench…</p>
-			</div>
-		);
-	}
+	if(!displayedQuestion && !loading) return null;
 
 	return (
 		<div
